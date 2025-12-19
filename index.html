@@ -3,119 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASPD Payroll Tracker</title>
+    <title>ASPD PAYROLL - AGGRESSIVE SYNC</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0d131f; color: #f3f4f6; }
-        .card { background-color: #1f2937; border-radius: 1rem; padding: 1.5rem; border: 1px solid #374151; }
-        input { background-color: #374151; border: 1px solid #4b5563; color: white; padding: 0.6rem; border-radius: 0.4rem; width: 100%; }
-        .admin-only { display: none !important; }
-        .unlocked .admin-only { display: block !important; }
+        body { background-color: #06090f; color: #f3f4f6; font-family: sans-serif; }
+        .card { background-color: #161b22; border-radius: 12px; padding: 20px; border: 1px solid #30363d; }
+        .status-pulse { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .online { background-color: #238636; box-shadow: 0 0 10px #238636; }
+        .offline { background-color: #da3633; box-shadow: 0 0 10px #da3633; }
     </style>
 </head>
-<body id="appBody" class="p-4 sm:p-8 min-h-screen">
-    <div class="max-w-5xl mx-auto space-y-6">
-        <header class="flex flex-col md:flex-row justify-between items-center bg-gray-900 p-6 rounded-2xl border border-gray-700">
+<body id="appBody" class="p-6">
+    <div class="max-w-3xl mx-auto space-y-6">
+        <div class="card flex justify-between items-center border-t-4 border-yellow-500">
             <div>
-                <h1 class="text-3xl font-bold text-yellow-400 tracking-tight">ASPD PAYROLL</h1>
-                <p id="statusText" class="text-gray-400 text-xs uppercase tracking-widest mt-1">Connecting...</p>
-            </div>
-            <div class="flex items-center gap-3 mt-4 md:mt-0">
-                <input type="password" id="adminKey" placeholder="Admin Key" class="w-32 text-sm">
-                <button onclick="checkLock()" class="bg-indigo-600 px-4 py-2 rounded-lg font-bold text-sm">Unlock</button>
-            </div>
-        </header>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="card h-fit border-l-4 border-yellow-500 text-center">
-                <h3 class="text-gray-400 text-xs font-bold uppercase">Dept. Liability</h3>
-                <p id="totalDebt" class="text-3xl font-bold text-white mt-2">$0.00</p>
-            </div>
-            <div class="md:col-span-2 card">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-xl text-gray-200">Personnel Roster</h3>
-                    <button onclick="openModal()" class="admin-only bg-green-600 px-4 py-2 rounded-lg text-xs font-bold">+ NEW ENTRY</button>
+                <h1 class="text-xl font-bold text-white tracking-tighter">ASPD PAYROLL <span class="text-yellow-500">v2.0</span></h1>
+                <div class="flex items-center mt-1">
+                    <span id="statusDot" class="status-pulse offline"></span>
+                    <span id="statusText" class="text-xs font-mono uppercase text-gray-400">Force Syncing...</span>
                 </div>
-                <div id="rosterList" class="space-y-3"></div>
+            </div>
+            <div class="flex gap-2">
+                <input type="password" id="adminKey" placeholder="KEY" class="bg-gray-900 border border-gray-700 p-2 rounded text-white w-20 text-xs">
+                <button onclick="bruteForceUnlock()" class="bg-yellow-600 px-3 py-2 rounded font-bold text-xs text-black">BOOT</button>
             </div>
         </div>
-        <div id="officerModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
-            <div class="bg-gray-800 border border-gray-700 p-6 rounded-2xl w-full max-w-md">
-                <h2 id="modalTitle" class="text-xl font-bold mb-4 text-yellow-400">Update Record</h2>
-                <input type="hidden" id="editIndex">
-                <div class="space-y-4">
-                    <input type="text" id="nodeName" placeholder="Name/Nickname">
-                    <input type="text" id="nodeRank" placeholder="Rank">
-                    <input type="number" id="nodePay" placeholder="Weekly Pay">
-                    <div class="flex gap-2 mt-6">
-                        <button onclick="closeModal()" class="flex-1 bg-gray-700 py-3 rounded-xl font-bold">Cancel</button>
-                        <button onclick="saveOfficer()" class="flex-1 bg-indigo-600 py-3 rounded-xl font-bold">Sync to Cloud</button>
-                    </div>
-                </div>
+
+        <div id="mainDisplay" class="card text-center">
+            <h3 class="text-gray-500 text-xs font-bold uppercase tracking-widest">Total Liability</h3>
+            <p id="totalDebt" class="text-5xl font-black text-white mt-2">$0.00</p>
+        </div>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-gray-300">Personnel Roster</h3>
+                <button onclick="toggleModal(true)" class="hidden" id="entryBtn" style="background:#238636; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:bold;">+ NEW ENTRY</button>
             </div>
+            <div id="rosterList" class="space-y-3"></div>
         </div>
     </div>
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh_PQpMLv2NHxbjFlCanKdj_yMh1HdbbRs_tzw4sEGtUrSrEGTiZjVagIsdoRXvL3M0w/exec";
-        const ADMIN_PASSWORD = "ASPD2025"; 
 
-        let employees = [];
-        function checkLock() {
-            if (document.getElementById('adminKey').value === ADMIN_PASSWORD) {
-                document.getElementById('appBody').classList.add('unlocked');
-                alert("Cloud Connection Verified");
-            } else { alert("Incorrect Key"); }
-        }
-        async function loadData() {
+    <script>
+        const TARGET_URL = "https://script.google.com/macros/s/AKfycbxh_PQpMLv2NHxbjFlCanKdj_yMh1HdbbRs_tzw4sEGtUrSrEGTiZjVagIsdoRXvL3M0w/exec";
+        const MASTER_KEY = "ASPD2025";
+
+        // AGGRESSIVE SYNC ENGINE
+        async function startBruteForceSync() {
+            console.log("Attempting Brute Force Connection...");
             try {
-                const response = await fetch(SCRIPT_URL);
+                // The '?nocache=' part forces a fresh connection every time
+                const response = await fetch(`${TARGET_URL}?nocache=${Date.now()}`);
+                if (!response.ok) throw new Error('Target Refused Connection');
+                
                 const data = await response.json();
-                employees = data.employees.map(r => ({ id: r[0], name: r[1], rank: r[2], wkBasic: r[3], wkAccrual: r[5], date: r[7] }));
-                renderUI();
-                document.getElementById('statusText').innerText = "✅ CLOUD ACTIVE";
-            } catch (e) { document.getElementById('statusText').innerText = "❌ SYNC OFFLINE"; }
-        }
-        function renderUI() {
-            const list = document.getElementById('rosterList');
-            let total = 0;
-            list.innerHTML = employees.map((emp, index) => {
-                total += parseFloat(emp.wkAccrual || 0);
-                return `<div class="flex justify-between items-center bg-gray-900/40 p-4 rounded-xl border border-gray-800">
-                    <div><p class="font-bold text-white text-lg">${emp.name}</p><p class="text-xs text-gray-500 uppercase font-semibold">${emp.rank}</p></div>
-                    <div class="flex items-center gap-4"><p class="text-yellow-400 font-bold">$${parseFloat(emp.wkAccrual).toLocaleString()}</p>
-                    <button onclick="openModal(${index})" class="admin-only bg-gray-700 p-2 rounded hover:bg-gray-600"><i class="fa-solid fa-pen"></i></button></div></div>`;
-            }).join('');
-            document.getElementById('totalDebt').innerText = `$${total.toLocaleString()}`;
-        }
-        function openModal(index = null) {
-            if (index !== null) {
-                const emp = employees[index];
-                document.getElementById('modalTitle').innerText = "Rename Officer";
-                document.getElementById('nodeName').value = emp.name;
-                document.getElementById('nodeRank').value = emp.rank;
-                document.getElementById('nodePay').value = emp.wkBasic;
-                document.getElementById('editIndex').value = index;
-            } else {
-                document.getElementById('modalTitle').innerText = "New Entry";
-                document.getElementById('nodeName').value = ""; document.getElementById('nodeRank').value = ""; document.getElementById('nodePay').value = ""; document.getElementById('editIndex').value = "";
+                updateVisuals(data.employees);
+                
+                document.getElementById('statusDot').className = "status-pulse online";
+                document.getElementById('statusText').innerText = "SYSTEM ACTIVE";
+                document.getElementById('statusText').classList.add('text-green-500');
+            } catch (err) {
+                console.error("Sync Failed. Retrying in 5 seconds...");
+                document.getElementById('statusText').innerText = "RETRYING CONNECTION...";
+                setTimeout(startBruteForceSync, 5000); // Auto-retry every 5 seconds
             }
-            document.getElementById('officerModal').classList.remove('hidden');
         }
-        function closeModal() { document.getElementById('officerModal').classList.add('hidden'); }
-        async function saveOfficer() {
-            const name = document.getElementById('nodeName').value;
-            const rank = document.getElementById('nodeRank').value;
-            const pay = document.getElementById('nodePay').value;
-            const idx = document.getElementById('editIndex').value;
-            if (idx === "") { employees.push({ id: Date.now(), name, rank, wkBasic: pay, wkAccrual: pay, date: "N/A" });
-            } else { employees[idx].name = name; employees[idx].rank = rank; employees[idx].wkBasic = pay; employees[idx].wkAccrual = pay; }
-            closeModal(); renderUI();
-            document.getElementById('statusText').innerText = "SYNCING...";
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ type: "SAVE_ALL", employees: employees, newLogs: [] }) });
-            document.getElementById('statusText').innerText = "✅ CLOUD ACTIVE";
+
+        function updateVisuals(employees) {
+            const list = document.getElementById('rosterList');
+            let grandTotal = 0;
+            list.innerHTML = employees.map(emp => {
+                grandTotal += parseFloat(emp[5] || 0);
+                return `
+                <div class="flex justify-between items-center bg-gray-900/50 p-4 rounded-lg border border-gray-800">
+                    <div>
+                        <p class="font-bold text-gray-200">${emp[1]}</p>
+                        <p class="text-[10px] text-gray-500 uppercase">${emp[2]}</p>
+                    </div>
+                    <p class="text-yellow-500 font-mono font-bold">$${parseFloat(emp[5] || 0).toLocaleString()}</p>
+                </div>`;
+            }).join('');
+            document.getElementById('totalDebt').innerText = `$${grandTotal.toLocaleString()}`;
         }
-        window.onload = loadData;
+
+        function bruteForceUnlock() {
+            if (document.getElementById('adminKey').value === MASTER_KEY) {
+                document.getElementById('entryBtn').classList.remove('hidden');
+                alert("ADMIN OVERRIDE SUCCESSFUL");
+            } else {
+                alert("ACCESS DENIED");
+            }
+        }
+
+        // Initialize on load
+        window.onload = startBruteForceSync;
     </script>
 </body>
 </html>
