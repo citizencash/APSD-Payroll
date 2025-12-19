@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASPD PAYROLL TRACKER</title>
+    <title>APSD MAINBOARD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -13,7 +13,6 @@
         .orange-glow { border: 2px solid #9a3412; box-shadow: 0 0 15px rgba(154, 52, 18, 0.2); }
         .modal-overlay { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); z-index: 100; }
         
-        /* 1:1 Rank Button (Ref: 4433) */
         .rank-container {
             background: #6d28d9;
             border-radius: 0.75rem;
@@ -40,7 +39,6 @@
             gap: 6px;
         }
 
-        /* Status Button (Ref: 1766173117301) */
         .status-btn {
             background: #1e3a8a;
             color: #ffffff;
@@ -65,32 +63,7 @@
     <div id="loadingOverlay" class="fixed inset-0 z-[200] flex items-center justify-center bg-[#05070a]">
         <div class="text-center">
             <i class="fa-solid fa-sync fa-spin text-4xl text-indigo-400 mb-4"></i>
-            <p class="text-gray-400 font-bold tracking-widest uppercase">Syncing Mainframe Data...</p>
-        </div>
-    </div>
-
-    <div id="adjustModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0d1117] rounded-3xl p-6 w-full max-w-sm border border-gray-800">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold flex items-center gap-2 uppercase">
-                    <i class="fa-solid fa-money-bill-1-wave text-green-500"></i> Manual Pay Adjustment
-                </h3>
-                <button onclick="document.getElementById('adjustModal').classList.add('hidden')" class="text-gray-500 text-xl">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <p class="text-gray-500 text-sm font-bold">Personnel: <span id="adjName" class="text-white"></span></p>
-                    <p class="text-gray-500 text-sm font-bold">Current Rank: <span id="adjRank" class="text-white"></span></p>
-                </div>
-                <div class="flex gap-3">
-                    <div class="flex-1">
-                        <label class="text-[9px] font-bold text-gray-500 uppercase">New Weekly Base</label>
-                        <input type="text" id="newBase" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl text-white font-bold">
-                    </div>
-                </div>
-                <p class="text-[10px] text-gray-500 italic">Note: Monthly equivalent is (Base) * 4.</p>
-                <button id="saveAdjBtn" class="w-full bg-green-700 py-4 rounded-xl font-bold uppercase">Save Adjustment</button>
-            </div>
+            <p class="text-gray-400 font-bold tracking-widest uppercase">Syncing APSD Mainframe...</p>
         </div>
     </div>
 
@@ -119,9 +92,30 @@
         </div>
     </div>
 
+    <div id="adjustModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0d1117] rounded-3xl p-6 w-full max-w-sm border border-gray-800">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-money-bill-1-wave text-green-500"></i> Pay Adjustment
+                </h3>
+                <button onclick="document.getElementById('adjustModal').classList.add('hidden')" class="text-gray-500 text-xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-gray-500 text-sm font-bold">Personnel: <span id="adjName" class="text-white"></span></p>
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">New Weekly Base</label>
+                    <input type="text" id="newBase" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl text-white font-bold">
+                </div>
+                <button id="saveAdjBtn" class="w-full bg-green-700 py-4 rounded-xl font-bold uppercase">Save Adjustment</button>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-md mx-auto space-y-6">
         <header class="text-center py-4">
-            <h1 class="text-3xl font-black italic text-yellow-500 uppercase tracking-tighter">ASPD Payroll Tracker</h1>
+            <h1 class="text-3xl font-black italic text-yellow-500 uppercase tracking-tighter italic">APSD</h1>
             <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">● Uplink Active // Cloud Sync</p>
         </header>
 
@@ -140,6 +134,10 @@
                 <p id="hireCount" class="text-3xl font-bold text-purple-500">0</p>
             </div>
         </div>
+
+        <button onclick="secureRequest('factory')" class="w-full bg-red-950/20 border border-red-900/50 text-red-500 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest italic">
+            <i class="fa-solid fa-skull mr-2"></i> Secure Factory Reset
+        </button>
 
         <div class="glow-card orange-glow">
             <h3 class="font-bold text-lg mb-4 uppercase italic flex items-center">
@@ -209,6 +207,7 @@
                 closeSecurityGate();
                 if (pendingAction === 'pay') processPayment();
                 if (pendingAction === 'add') document.getElementById('addModal').classList.remove('hidden');
+                if (pendingAction === 'factory') { localStorage.clear(); location.reload(); }
             } else { alert("ACCESS DENIED"); document.getElementById('gateKey').value = ""; }
         }
 
@@ -232,7 +231,6 @@
         function openAdjustment(id) {
             const emp = employees.find(e => e.id == id);
             document.getElementById('adjName').innerText = emp.name;
-            document.getElementById('adjRank').innerText = emp.rank;
             document.getElementById('newBase').value = (emp.customPay || RANKS[emp.rank]).toLocaleString();
             document.getElementById('adjustModal').classList.remove('hidden');
             document.getElementById('saveAdjBtn').onclick = () => {
@@ -245,7 +243,7 @@
 
         function triggerTermination(id) {
             const emp = employees.find(e => e.id == id);
-            document.getElementById('termText').innerText = `Are you sure you want to permanently remove/terminate ${emp.name} from the payroll roster? This action will be logged.`;
+            document.getElementById('termText').innerText = `Are you sure you want to permanently remove ${emp.name} from the roster? This action will be logged.`;
             document.getElementById('termModal').classList.remove('hidden');
             document.getElementById('confirmTermBtn').onclick = () => {
                 history.unshift({ type: 'TERMINATION', name: emp.name, rank: emp.rank });
@@ -303,26 +301,20 @@
                             <i onclick="triggerTermination('${e.id}')" class="fa-solid fa-trash text-red-900 text-xl cursor-pointer"></i>
                         </div>
                     </div>
-                    
                     <div class="border-t border-gray-800 pt-2 mb-4">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Monthly Projection: <span class="text-blue-500">$${monthly.toLocaleString()}.00</span></p>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase">Monthly Projection: <span class="text-blue-500">$${monthly.toLocaleString()}.00</span></p>
                     </div>
-
                     <div>
                         <p class="text-[10px] text-blue-500 font-bold uppercase italic">Weekly Pay (Accrual):</p>
                         <p class="text-3xl font-black mb-4">$${weekly.toLocaleString()}.00</p>
                     </div>
-
                     <div class="rank-container">
                         <div class="rank-display">Rank: ${e.rank} <i class="fa-solid fa-chevron-down text-[10px]"></i></div>
                         <select onchange="updateRank('${e.id}', this.value)">
                             ${Object.keys(RANKS).map(r => `<option value="${r}" ${r === e.rank ? 'selected' : ''}>${r}</option>`).join('')}
                         </select>
                     </div>
-
-                    <div class="status-btn">
-                        <i class="fa-solid fa-hourglass-half"></i> Pending Log
-                    </div>
+                    <div class="status-btn"><i class="fa-solid fa-hourglass-half"></i> Pending Log</div>
                 </div>
             `}).join('');
 
