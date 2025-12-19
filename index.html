@@ -65,7 +65,7 @@
         </header>
 
         <div class="glow-card orange-glow text-center">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Department Fund (Liability)</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Department Fund (Resources)</p>
             <p id="totalFund" class="text-4xl font-black text-yellow-500 mt-1">$0</p>
         </div>
 
@@ -82,18 +82,18 @@
                     <option value="">-- Select Employee from Sheet --</option>
                 </select>
                 <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
-                    <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Expected Pay (Accrued Lump Sum)</label>
+                    <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Expected Pay (Accrued Amount)</label>
                     <p id="accrualAmount" class="text-3xl font-bold mb-1">0.00</p>
                     <p id="accrualDetail" class="text-[10px] text-gray-500 italic">Accrual Weeks: 0.00 | Weekly Accrual: 0.00</p>
                 </div>
                 <div class="flex items-center justify-between p-2">
-                    <span class="text-green-500 font-bold text-sm">Paid Full Amount Received</span>
+                    <span class="text-green-500 font-bold text-sm">Full Pay Picked Up</span>
                     <label class="switch"><input type="checkbox" id="fullPayToggle" onchange="toggleFullPay()"><span class="slider"></span></label>
                 </div>
                 <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-xl">
                 <button onclick="secureRequest('pay')" class="w-full bg-orange-800 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
                     <span>Log Transaction</span>
-                    <span id="btnSubtext" class="text-[8px] opacity-70 mt-1 font-normal uppercase">Select employee and log payment.</span>
+                    <span class="text-[8px] opacity-70 mt-1 font-normal uppercase">Unpaid amounts reroll to Department Fund.</span>
                 </button>
             </div>
         </div>
@@ -117,7 +117,6 @@
 
         let employees = JSON.parse(localStorage.getItem('ASPD_Employees')) || [];
         let history = JSON.parse(localStorage.getItem('ASPD_History')) || [];
-        let pendingAction = null;
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -161,12 +160,20 @@
 
         function processPayment() {
             const id = document.getElementById('personnelSelect').value;
+            const expected = parseFloat(document.getElementById('accrualAmount').innerText.replace(/,/g, ''));
             const actual = parseFloat(document.getElementById('actualPaidInput').value.replace(/,/g, '')) || 0;
             const emp = employees.find(e => e.id == id);
-            history.unshift({ type: 'PAYMENT', name: emp.name, rank: emp.rank, amount: actual, timestamp: new Date().toLocaleDateString() });
+            
+            // LOGIC: Only the UNPAID amount gets rerolled into the Fund.
+            const rerollAmount = expected - actual;
+            
+            history.unshift({ type: 'PAYROLL_LOG', name: emp.name, rank: emp.rank, amount: rerollAmount, paid: actual, timestamp: new Date().toLocaleDateString() });
             emp.lastPay = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('fullPayToggle').checked = false;
+            document.getElementById('actualPaidInput').value = "0.00";
             save();
-            showToast(`PAYMENT LOGGED for ${emp.name}`);
+            showToast(`Logged for ${emp.name}. Rerolled ${rerollAmount.toLocaleString()} to Funds.`);
         }
 
         function addEmployee() {
@@ -175,7 +182,7 @@
             const date = document.getElementById('newDate').value;
             if(!name || !date) return;
             employees.push({ id: Date.now().toString().slice(-4), name, rank, lastPay: date });
-            history.unshift({ type: 'NEW HIRE', name, rank, amount: RANKS[rank], timestamp: new Date().toLocaleDateString() });
+            history.unshift({ type: 'NEW HIRE', name, rank, amount: 0, timestamp: new Date().toLocaleDateString() });
             document.getElementById('addModal').classList.add('hidden');
             save();
         }
@@ -208,7 +215,8 @@
         }
 
         function render() {
-            document.getElementById('totalFund').innerText = `$${history.reduce((sum, h) => sum + (h.type === 'PAYMENT' ? h.amount : 0), 0).toLocaleString()}`;
+            document.getElementById('totalFund').innerText = `$${history.reduce((sum, h) => sum + (h.type === 'PAYROLL_LOG' ? (h.amount || 0) : 0), 0).toLocaleString()}`;
+            
             document.getElementById('rosterContainer').innerHTML = employees.map(e => `
                 <div class="glow-card purple-glow">
                     <div class="flex justify-between items-start">
@@ -216,12 +224,11 @@
                         <i onclick="terminateEmp('${e.id}')" class="fa-solid fa-trash text-red-900 text-xl cursor-pointer"></i>
                     </div>
                     <div class="mt-4 pt-2 border-t border-gray-800">
-                        <p class="text-[10px] text-blue-500 font-bold uppercase italic mt-2">Weekly Accrual:</p><p class="text-3xl font-black">$${RANKS[e.rank].toLocaleString()}.00</p>
+                        <p class="text-[10px] text-blue-500 font-bold uppercase italic mt-2">Weekly Rate:</p><p class="text-3xl font-black">$${RANKS[e.rank].toLocaleString()}.00</p>
                     </div>
                     <div class="rank-container mt-4"><div class="rank-display">Rank: ${e.rank} <i class="fa-solid fa-chevron-down text-[10px]"></i></div>
                         <select onchange="updateRank('${e.id}', this.value)">${Object.keys(RANKS).map(r => `<option value="${r}" ${r === e.rank ? 'selected' : ''}>${r}</option>`).join('')}</select>
                     </div>
-                    <div class="status-btn"><i class="fa-solid fa-hourglass-half"></i> Active Personnel</div>
                 </div>`).join('');
 
             document.getElementById('personnelSelect').innerHTML = `<option value="">-- Select Employee --</option>` + 
@@ -232,12 +239,14 @@
                 let restoreBtn = "";
                 if(h.type === 'TERMINATION') { color = "text-red-600"; icon = "fa-user-minus"; restoreBtn = `<button onclick="restoreEmp(${i})" class="bg-green-900 text-white text-[9px] px-2 py-1 rounded mt-2">RESTORE</button>`; }
                 if(h.type === 'RANK_UPDATE') { color = "text-purple-500"; icon = "fa-angles-up"; label = `PROMOTION: ${h.rank}`; }
+                if(h.type === 'PAYROLL_LOG') { color = h.amount > 0 ? "text-yellow-500" : "text-green-500"; icon = "fa-sack-dollar"; label = h.amount > 0 ? "FUND REROLL (UNPAID)" : "FULL PAY PICKED UP"; }
+                
                 return `
                 <div class="audit-entry">
                     <div class="flex gap-3"><i class="fa-solid ${icon} ${color} mt-1"></i>
-                        <div><p class="text-[10px] text-gray-500 font-bold">By: SYSTEM</p><p class="text-lg font-black leading-tight">${h.name}</p><p class="text-[9px] text-gray-500 font-bold uppercase">${label}</p>${restoreBtn}</div>
+                        <div><p class="text-[10px] text-gray-500 font-bold">Ref: ${h.timestamp}</p><p class="text-lg font-black leading-tight">${h.name}</p><p class="text-[9px] text-gray-500 font-bold uppercase">${label}</p>${restoreBtn}</div>
                     </div>
-                    <div class="text-right text-[9px] font-bold ${color} uppercase"><p>${h.type}</p><p class="text-white text-xs">$${(h.amount || 0).toLocaleString()}</p></div>
+                    <div class="text-right text-[9px] font-bold ${color} uppercase"><p>Fund Impact</p><p class="text-white text-xs">$${(h.amount || 0).toLocaleString()}</p></div>
                 </div>`}).join('');
         }
         window.onload = render;
