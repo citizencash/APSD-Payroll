@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASPD Payroll Tracker | Secure Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0d131f; color: #f3f4f6; }
+        .card { background-color: #1f2937; border-radius: 1rem; padding: 1.5rem; border: 1px solid #374151; }
+        input, select { background-color: #374151; border: 1px solid #4b5563; color: white; padding: 0.6rem; border-radius: 0.4rem; width: 100%; }
+        
+        .admin-only { display: none !important; }
+        .unlocked .admin-only { display: block !important; }
+        .unlocked .admin-flex { display: flex !important; }
+    </style>
+</head>
+<body id="appBody" class="p-4 sm:p-8 min-h-screen">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        
+        <header class="flex flex-col md:flex-row justify-between items-center bg-gray-900 p-6 rounded-2xl border border-gray-700">
+            <div>
+                <h1 class="text-3xl font-bold text-yellow-400 tracking-tight">ASPD PAYROLL</h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <span id="statusDot" class="h-2 w-2 rounded-full bg-red-500"></span>
+                    <p id="statusText" class="text-gray-400 text-xs uppercase tracking-widest">Connecting...</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-4 md:mt-0">
+                <div class="relative">
+                    <i id="lockIcon" class="fa-solid fa-lock absolute left-3 top-3 text-gray-500"></i>
+                    <input type="password" id="adminKey" placeholder="Admin Key" class="pl-9 w-40 text-sm bg-gray-800 border-gray-600">
+                </div>
+                <button onclick="checkLock()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-bold text-sm transition">Unlock</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card bg-gradient-to-br from-gray-800 to-gray-900 border-l-4 border-yellow-500 h-fit">
+                <h3 class="text-gray-400 text-xs font-bold uppercase">Total Dept. Liability</h3>
+                <p id="totalDebt" class="text-3xl font-bold text-white mt-2">$0.00</p>
+            </div>
+
+            <div class="md:col-span-2 card">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-xl text-gray-200">Personnel Roster</h3>
+                    <button onclick="openModal()" class="admin-only bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg text-xs font-bold transition">
+                        <i class="fa-solid fa-user-plus mr-2"></i>ADD OFFICER
+                    </button>
+                </div>
+                <div id="rosterList" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <div id="officerModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+                <h2 id="modalTitle" class="text-xl font-bold mb-4 text-yellow-400">Add New Officer</h2>
+                <input type="hidden" id="editIndex">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] text-gray-400 uppercase font-bold">Officer Name</label>
+                        <input type="text" id="nodeName" placeholder="e.g. John Doe">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 uppercase font-bold">Rank</label>
+                        <input type="text" id="nodeRank" placeholder="e.g. Sergeant">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 uppercase font-bold">Weekly Pay ($)</label>
+                        <input type="number" id="nodePay" placeholder="0">
+                    </div>
+                    <div class="flex gap-2 mt-6">
+                        <button onclick="closeModal()" class="flex-1 bg-gray-700 py-3 rounded-xl font-bold">Cancel</button>
+                        <button onclick="saveOfficer()" class="flex-1 bg-indigo-600 py-3 rounded-xl font-bold">Confirm & Sync</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh_PQpMLv2NHxbjFlCanKdj_yMh1HdbbRs_tzw4sEGtUrSrEGTiZjVagIsdoRXvL3M0w/exec";
+        const ADMIN_PASSWORD = "ASPD2025"; 
+
+        let employees = [];
+
+        function checkLock() {
+            if (document.getElementById('adminKey').value === ADMIN_PASSWORD) {
+                document.getElementById('appBody').classList.add('unlocked');
+                document.getElementById('lockIcon').className = "fa-solid fa-unlock text-green-400";
+                alert("Admin Access: Edit Mode Enabled");
+            } else { alert("Access Denied"); }
+        }
+
+        async function loadData() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                employees = data.employees.map(r => ({
+                    id: r[0], name: r[1], rank: r[2], wkBasic: r[3], wkBonus: r[4], wkAccrual: r[5], month: r[6], date: r[7], status: r[8]
+                }));
+                renderUI();
+                document.getElementById('statusDot').className = "h-2 w-2 rounded-full bg-green-500";
+                document.getElementById('statusText').innerText = "Cloud Active";
+            } catch (e) { document.getElementById('statusText').innerText = "Sync Offline"; }
+        }
+
+        function renderUI() {
+            const list = document.getElementById('rosterList');
+            let total = 0;
+            list.innerHTML = employees.map((emp, index) => {
+                total += parseFloat(emp.wkAccrual || 0);
+                return `
+                <div class="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                    <div>
+                        <p class="font-bold text-white text-lg">${emp.name}</p>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wider">${emp.rank} • Last Paid: ${emp.date || 'N/A'}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <p class="text-yellow-400 font-bold">$${parseFloat(emp.wkAccrual).toLocaleString()}</p>
+                            <p class="text-[10px] text-gray-500 uppercase">Accrual</p>
+                        </div>
+                        <button onclick="openModal(${index})" class="admin-only bg-gray-700 p-2 rounded hover:bg-gray-600 transition">
+                            <i class="fa-solid fa-pen-to-square text-xs"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            document.getElementById('totalDebt').innerText = `$${total.toLocaleString()}`;
+        }
+
+        function openModal(index = null) {
+            if (index !== null) {
+                const emp = employees[index];
+                document.getElementById('modalTitle').innerText = "Edit Officer Details";
+                document.getElementById('nodeName').value = emp.name;
+                document.getElementById('nodeRank').value = emp.rank;
+                document.getElementById('nodePay').value = emp.wkBasic;
+                document.getElementById('editIndex').value = index;
+            } else {
+                document.getElementById('modalTitle').innerText = "Add New Officer";
+                document.getElementById('nodeName').value = "";
+                document.getElementById('nodeRank').value = "";
+                document.getElementById('nodePay').value = "";
+                document.getElementById('editIndex').value = "";
+            }
+            document.getElementById('officerModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('officerModal').classList.add('hidden'); }
+
+        async function saveOfficer() {
+            const name = document.getElementById('nodeName').value;
+            const rank = document.getElementById('nodeRank').value;
+            const pay = document.getElementById('nodePay').value;
+            const idx = document.getElementById('editIndex').value;
+
+            if (idx === "") {
+                // ADD NEW
+                employees.push({ id: Date.now(), name, rank, wkBasic: pay, wkBonus: 0, wkAccrual: pay, month: 0, date: "N/A", status: "Active" });
+            } else {
+                // UPDATE EXISTING
+                employees[idx].name = name;
+                employees[idx].rank = rank;
+                employees[idx].wkBasic = pay;
+                employees[idx].wkAccrual = pay; // Simple reset for this version
+            }
+
+            closeModal();
+            renderUI();
+            document.getElementById('statusText').innerText = "Uploading...";
+
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ type: "SAVE_ALL", employees: employees, newLogs: [] })
+            });
+            document.getElementById('statusText').innerText = "Cloud Active";
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
