@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APSD MAINBOARD</title>
+    <title>APSD PAYROLL TRACKER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        body { background-color: #05070a; color: #ffffff; font-family: sans-serif; }
+        body { background-color: #05070a; color: #ffffff; font-family: sans-serif; overflow-x: hidden; }
         .glow-card { background: #0d1117; border-radius: 1.5rem; padding: 1.5rem; position: relative; }
         .purple-glow { border: 2px solid #6d28d9; box-shadow: 0 0 15px rgba(109, 40, 217, 0.2); }
         .orange-glow { border: 2px solid #9a3412; box-shadow: 0 0 15px rgba(154, 52, 18, 0.2); }
         .modal-overlay { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); z-index: 100; }
         
         /* Toggle Switch Styling */
-        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #22c55e; }
-        input:checked + .slider:before { transform: translateX(26px); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #161b22; transition: .4s; border-radius: 34px; border: 1px solid #30363d; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: #444; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #064e3b; border-color: #22c55e; }
+        input:checked + .slider:before { transform: translateX(24px); background-color: #22c55e; }
 
         .rank-container { background: #6d28d9; border-radius: 0.75rem; position: relative; height: 44px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
         .rank-container select { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
@@ -28,29 +28,15 @@
         .status-btn { background: #1e3a8a; color: #ffffff; border-radius: 0.75rem; padding: 8px; width: 100%; font-size: 10px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .audit-entry { border-bottom: 1px solid #161b22; padding: 20px 0; display: flex; justify-content: space-between; }
         
-        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #064e3b; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 12px; border-left: 5px solid #22c55e; z-index: 500; display: none; }
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #064e3b; color: #fff; padding: 14px 24px; border-radius: 8px; font-weight: bold; font-size: 12px; border-left: 5px solid #22c55e; z-index: 500; display: none; width: 90%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body class="p-4 min-h-screen">
 
     <div id="toast"></div>
 
-    <div id="termModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0d1117] rounded-3xl p-8 w-full max-w-sm text-center border border-gray-800">
-            <div class="bg-red-500/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-user-minus text-red-500 text-2xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold mb-4">Confirm Termination</h2>
-            <p id="termText" class="text-gray-400 text-sm mb-8 leading-relaxed"></p>
-            <div class="flex gap-3">
-                <button onclick="document.getElementById('termModal').classList.add('hidden')" class="flex-1 bg-[#1c2128] py-4 rounded-xl font-bold text-gray-400">Cancel</button>
-                <button id="confirmTermBtn" class="flex-1 bg-red-700 py-4 rounded-xl font-bold">Confirm</button>
-            </div>
-        </div>
-    </div>
-
     <div id="securityGate" class="modal-overlay fixed inset-0 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0d1117] rounded-3xl border-t-4 border-orange-600 p-8 w-full max-w-sm text-center">
+        <div class="bg-[#0d1117] rounded-3xl border-t-4 border-orange-600 p-8 w-full max-sm text-center">
             <h2 class="text-xl font-bold uppercase italic mb-6">Security Authorization</h2>
             <input type="password" id="gateKey" placeholder="****" maxlength="4" class="w-full bg-gray-900 p-4 rounded-xl text-center text-2xl font-bold mb-6 outline-none border border-gray-700 text-white">
             <div class="flex gap-3">
@@ -62,7 +48,7 @@
 
     <div class="max-w-md mx-auto space-y-6">
         <header class="text-center py-4">
-            <h1 class="text-3xl font-black italic text-yellow-500 uppercase tracking-tighter italic">APSD</h1>
+            <h1 class="text-2xl font-black italic text-[#eab308] uppercase tracking-tight">APSD PAYROLL TRACKER</h1>
             <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">● Uplink Active // Cloud Sync</p>
         </header>
 
@@ -103,11 +89,11 @@
 
                 <div>
                     <label class="text-[10px] text-yellow-600 font-bold uppercase">Actual Amount Paid (Shortfall Check)</label>
-                    <input type="text" id="actualPaidInput" placeholder="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-xl">
+                    <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-xl">
                     <p class="text-[9px] text-gray-500 mt-2">*If this amount is less than Expected Pay, a Shortfall is logged. If it's equal or more, a Full Pay status is logged.</p>
                 </div>
 
-                <button onclick="secureRequest('pay')" class="w-full bg-orange-800 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
+                <button onclick="secureRequest('pay')" id="logBtn" class="w-full bg-orange-800 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
                     <span><i class="fa-solid fa-receipt mr-2"></i> Log Transaction</span>
                     <span id="btnSubtext" class="text-[8px] opacity-70 mt-1 font-normal uppercase">Select employee and enter pay or toggle 'Paid Full Amount'.</span>
                 </button>
@@ -152,7 +138,7 @@
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 4000);
+            setTimeout(() => t.style.display = 'none', 4500);
         }
 
         function secureRequest(action) {
@@ -175,33 +161,47 @@
 
         function updateTerminal() {
             const id = document.getElementById('personnelSelect').value;
+            const toggle = document.getElementById('fullPayToggle');
+            const actualInput = document.getElementById('actualPaidInput');
+
             if(!id) { 
                 document.getElementById('accrualAmount').innerText = "0.00"; 
                 document.getElementById('accrualDetail').innerText = "Accrual Weeks: 0.00 | Weekly Accrual: 0.00";
                 document.getElementById('btnSubtext').innerText = "Select employee and enter pay or toggle 'Paid Full Amount'.";
+                actualInput.value = "0.00";
+                toggle.checked = false;
                 return; 
             }
+
             const emp = employees.find(e => e.id == id);
-            const weeks = Math.max(0, Math.floor((Date.now() - new Date(emp.lastPay)) / (1000*60*60*24*7)));
+            const weeks = Math.max(1, Math.floor((Date.now() - new Date(emp.lastPay)) / (1000*60*60*24*7)));
             const pay = emp.customPay || RANKS[emp.rank];
             const total = pay * weeks;
             
             document.getElementById('accrualAmount').innerText = total.toLocaleString() + ".00";
-            document.getElementById('accrualDetail').innerText = `Accrual Weeks: ${weeks} | Weekly Accrual: ${pay.toLocaleString()}`;
+            document.getElementById('accrualDetail').innerText = `Accrual Weeks: ${weeks} (full 7-day periods) | Weekly Accrual: ${pay.toLocaleString()}.00 (${pay.toLocaleString()}.00 Basic)`;
             document.getElementById('btnSubtext').innerText = `Ready to log for ${emp.name}. Accrued Pay for ${weeks} WEEKS: ${total.toLocaleString()}.00`;
             
-            if(document.getElementById('fullPayToggle').checked) toggleFullPay();
+            if(toggle.checked) {
+                actualInput.value = total.toLocaleString() + ".00";
+            }
         }
 
         function toggleFullPay() {
-            if(document.getElementById('fullPayToggle').checked) {
-                document.getElementById('actualPaidInput').value = document.getElementById('accrualAmount').innerText.replace(/,/g, '');
+            const toggle = document.getElementById('fullPayToggle');
+            const actualInput = document.getElementById('actualPaidInput');
+            const expectedStr = document.getElementById('accrualAmount').innerText;
+
+            if(toggle.checked) {
+                actualInput.value = expectedStr;
+            } else {
+                actualInput.value = "0.00";
             }
         }
 
         function processPayment() {
             const id = document.getElementById('personnelSelect').value;
-            const actual = parseFloat(document.getElementById('actualPaidInput').value) || 0;
+            const actual = parseFloat(document.getElementById('actualPaidInput').value.replace(/,/g, '')) || 0;
             const emp = employees.find(e => e.id == id);
             const expected = parseFloat(document.getElementById('accrualAmount').innerText.replace(/,/g, ''));
             const status = actual < expected ? 'SHORTFALL' : 'FULL PAYMENT';
@@ -215,7 +215,7 @@
             
             showToast(`${status} LOGGED for ${emp.name}. Logged ${weeks} weeks. Fund Increase: ${actual.toLocaleString()} units.`);
             
-            document.getElementById('actualPaidInput').value = "";
+            document.getElementById('actualPaidInput').value = "0.00";
             document.getElementById('fullPayToggle').checked = false;
             render();
         }
@@ -267,7 +267,7 @@
                 </div>`}).join('');
 
             document.getElementById('personnelSelect').innerHTML = `<option value="">-- Select Employee from Sheet --</option>` + 
-                employees.map(e => `<option value="${e.id}">${e.name} (${e.rank})</option>`).join('');
+                employees.map(e => `<option value="${e.id}">${e.name} (${e.rank}) - Wkly Pay: ${ (e.customPay || RANKS[e.rank]).toLocaleString()}.00</option>`).join('');
 
             document.getElementById('auditLog').innerHTML = history.map(h => `
                 <div class="audit-entry">
