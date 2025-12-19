@@ -82,12 +82,12 @@
                     <option value="">-- Select Employee from Sheet --</option>
                 </select>
                 <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
-                    <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Total Due (Weekly Accrual + Bonuses)</label>
+                    <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Total Monthly Payout (Expected)</label>
                     <p id="accrualAmount" class="text-3xl font-bold mb-1">0.00</p>
-                    <p id="accrualDetail" class="text-[10px] text-gray-500 italic">Accrual Weeks: 0 | Bonus Balance: 0</p>
+                    <p id="accrualDetail" class="text-[10px] text-gray-500 italic">4-Week Projection + Bonuses</p>
                 </div>
                 <div class="flex items-center justify-between p-2">
-                    <span class="text-green-500 font-bold text-sm">Full Pay Picked Up</span>
+                    <span class="text-green-500 font-bold text-sm">Full Monthly Amount Paid</span>
                     <label class="switch"><input type="checkbox" id="fullPayToggle" onchange="toggleFullPay()"><span class="slider"></span></label>
                 </div>
                 <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-xl">
@@ -146,10 +146,10 @@
             const id = document.getElementById('personnelSelect').value;
             if(!id) return;
             const emp = employees.find(e => e.id == id);
-            const weeks = Math.max(1, Math.floor((Date.now() - new Date(emp.lastPay)) / (1000*60*60*24*7)));
-            const totalAccrued = (RANKS[emp.rank] * weeks) + (emp.bonusPool || 0);
-            document.getElementById('accrualAmount').innerText = totalAccrued.toLocaleString() + ".00";
-            document.getElementById('accrualDetail').innerText = `Accrual Weeks: ${weeks} | Bonus Balance: ${(emp.bonusPool || 0).toLocaleString()}`;
+            const monthlyBase = RANKS[emp.rank] * 4;
+            const totalMonthlyDue = monthlyBase + (emp.bonusPool || 0);
+            document.getElementById('accrualAmount').innerText = totalMonthlyDue.toLocaleString() + ".00";
+            document.getElementById('accrualDetail').innerText = `Monthly Projection: ${monthlyBase.toLocaleString()} | Bonus Balance: ${(emp.bonusPool || 0).toLocaleString()}`;
             if(document.getElementById('fullPayToggle').checked) toggleFullPay();
         }
 
@@ -159,6 +159,7 @@
 
         function processPayment() {
             const id = document.getElementById('personnelSelect').value;
+            if(!id) return;
             const emp = employees.find(e => e.id == id);
             const expected = parseFloat(document.getElementById('accrualAmount').innerText.replace(/,/g, ''));
             const actual = parseFloat(document.getElementById('actualPaidInput').value.replace(/,/g, '')) || 0;
@@ -171,7 +172,7 @@
             document.getElementById('fullPayToggle').checked = false;
             document.getElementById('actualPaidInput').value = "0.00";
             save();
-            showToast(`Logged for ${emp.name}. Rerolled ${rerollAmount.toLocaleString()} to Funds.`);
+            showToast(`Monthly Logged for ${emp.name}. Rerolled ${rerollAmount.toLocaleString()} to Funds.`);
         }
 
         function addEmployee() {
@@ -230,9 +231,9 @@
             document.getElementById('totalFund').innerText = `$${history.reduce((sum, h) => sum + (h.type === 'PAYROLL_LOG' ? (h.amount || 0) : 0), 0).toLocaleString()}`;
             
             document.getElementById('rosterContainer').innerHTML = employees.map(e => {
-                const weeks = Math.max(1, Math.floor((Date.now() - new Date(e.lastPay)) / (1000*60*60*24*7)));
                 const weeklyPay = RANKS[e.rank];
-                const currentAccrual = (weeklyPay * weeks) + (e.bonusPool || 0);
+                const monthlyProj = weeklyPay * 4;
+                const currentAccrual = monthlyProj + (e.bonusPool || 0);
                 return `
                 <div class="glow-card purple-glow">
                     <div class="flex justify-between items-start">
@@ -240,8 +241,8 @@
                         <i onclick="terminateEmp('${e.id}')" class="fa-solid fa-trash text-red-900 text-xl cursor-pointer"></i>
                     </div>
                     <div class="mt-4 grid grid-cols-2 gap-2 border-t border-gray-800 pt-2">
-                        <div><p class="text-[8px] text-blue-400 font-bold uppercase italic mt-2">Monthly Projection</p><p class="text-sm font-bold">$${(weeklyPay * 4).toLocaleString()}.00</p></div>
-                        <div><p class="text-[8px] text-yellow-500 font-bold uppercase italic mt-2">Current Accrual</p><p class="text-sm font-bold text-yellow-500">$${currentAccrual.toLocaleString()}.00</p></div>
+                        <div><p class="text-[8px] text-blue-400 font-bold uppercase italic mt-2">Standard Monthly</p><p class="text-sm font-bold">$${monthlyProj.toLocaleString()}.00</p></div>
+                        <div><p class="text-[8px] text-yellow-500 font-bold uppercase italic mt-2">Payout with Bonuses</p><p class="text-sm font-bold text-yellow-500">$${currentAccrual.toLocaleString()}.00</p></div>
                     </div>
                     <div class="rank-container mt-4"><div class="rank-display">Rank: ${e.rank} <i class="fa-solid fa-chevron-down text-[10px]"></i></div>
                         <select onchange="updateRank('${e.id}', this.value)">${Object.keys(RANKS).map(r => `<option value="${r}" ${r === e.rank ? 'selected' : ''}>${r}</option>`).join('')}</select>
