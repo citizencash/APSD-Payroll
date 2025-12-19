@@ -11,7 +11,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #05070a; color: #f3f4f6; padding-bottom: 40px; }
         .card { background: #0d1117; border: 1px solid #30363d; border-radius: 1rem; padding: 1.25rem; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 1.5rem; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; align-items: center; justify-content: center; padding: 1.5rem; }
         .modal.active { display: flex; }
         input, select { background: #0d1117; border: 1px solid #30363d; color: white; padding: 0.8rem; border-radius: 0.6rem; width: 100%; font-size: 16px; }
         .btn-purple { background: #7c3aed; font-weight: 800; border-radius: 0.75rem; transition: 0.2s; }
@@ -33,32 +33,20 @@
                 <p class="text-[9px] uppercase text-gray-500 font-bold mb-1">Total Department Fund (Liability)</p>
                 <p id="totalLiability" class="text-3xl font-black text-yellow-500 tracking-tighter">$0.00</p>
             </div>
+            
             <div class="grid grid-cols-2 gap-3">
                 <div class="card text-center"><p class="text-[8px] uppercase text-gray-500">Payments Logged</p><p class="text-xl font-bold">0</p></div>
                 <div class="card text-center"><p class="text-[8px] uppercase text-gray-500">New Hires</p><p id="hireCount" class="text-xl font-bold text-green-500">0</p></div>
             </div>
-            <button onclick="factoryReset()" class="w-full bg-red-900/20 border border-red-900/40 text-red-500 text-[9px] font-black py-2 rounded uppercase tracking-widest"><i class="fa-solid fa-skull mr-2"></i>Factory Reset Data</button>
-        </div>
 
-        <section class="card border-orange-500/30">
-            <h3 class="text-xs font-black text-gray-300 mb-4 flex items-center gap-2 uppercase italic">
-                <i class="fa-solid fa-file-invoice-dollar text-orange-500"></i> Log Payment Status
-            </h3>
-            <div class="space-y-4">
-                <select id="termSelect" onchange="updateTermAccrual()"><option value="">-- Select Employee From Sheet --</option></select>
-                <div>
-                    <label class="text-[9px] uppercase text-gray-500 font-bold ml-1">Expected Pay (Lump Sum)</label>
-                    <div id="termAccrual" class="bg-black/50 p-4 rounded-xl border border-gray-800 text-2xl font-black text-white">$0.00</div>
-                </div>
-                <button onclick="payPersonnel()" class="w-full bg-gradient-to-r from-orange-800 to-yellow-800 py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-950/20">
-                    Log Transaction
-                </button>
-            </div>
-        </section>
+            <button onclick="secureAction('reset')" class="w-full bg-red-900/20 border border-red-900/40 text-red-500 text-[9px] font-black py-2 rounded uppercase tracking-widest">
+                <i class="fa-solid fa-skull mr-2"></i>Secure Factory Reset
+            </button>
+        </div>
 
         <div class="flex justify-between items-center px-1">
             <h2 class="text-sm font-black uppercase text-gray-400 italic">Active Payroll Roster</h2>
-            <button onclick="openModal('addModal')" class="btn-purple px-4 py-2 text-[10px] flex items-center gap-2">
+            <button onclick="secureAction('add')" class="btn-purple px-4 py-2 text-[10px] flex items-center gap-1">
                 <i class="fa-solid fa-user-plus"></i> Add Personnel
             </button>
         </div>
@@ -71,18 +59,26 @@
         </section>
     </div>
 
+    <div id="gateModal" class="modal">
+        <div class="card w-full max-w-sm space-y-4 text-center">
+            <i class="fa-solid fa-lock text-yellow-500 text-2xl"></i>
+            <h3 class="text-lg font-black uppercase">Admin Authorization</h3>
+            <p class="text-[10px] text-gray-500">Enter code to modify payroll data</p>
+            <input type="password" id="gatePass" placeholder="••••" class="text-center tracking-[1rem]">
+            <button onclick="verifyGate()" class="w-full btn-purple py-3">Unlock Action</button>
+            <button onclick="closeModal('gateModal')" class="w-full text-xs text-gray-500">Cancel</button>
+        </div>
+    </div>
+
     <div id="adjustModal" class="modal">
         <div class="card w-full max-w-sm space-y-4 border-t-4 border-green-600">
-            <h3 class="text-lg font-black flex items-center gap-2 uppercase tracking-tighter">
-                <i class="fa-solid fa-money-bill-transfer text-green-500"></i> Manual Pay Adjustment
-            </h3>
+            <h3 class="text-lg font-black uppercase">Manual Pay Adjustment</h3>
             <p id="adjName" class="text-sm font-bold text-gray-300"></p>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="text-[8px] uppercase text-gray-500 font-bold">New Weekly Base</label><input type="number" id="adjBase"></div>
-                <div><label class="text-[8px] uppercase text-gray-500 font-bold">New Weekly Bonus</label><input type="number" id="adjBonus" value="0"></div>
+                <div><label class="text-[8px] uppercase text-gray-500 font-bold">Base</label><input type="number" id="adjBase"></div>
+                <div><label class="text-[8px] uppercase text-gray-500 font-bold">Bonus</label><input type="number" id="adjBonus" value="0"></div>
             </div>
-            <button onclick="saveAdjust()" class="w-full bg-green-600 py-4 rounded-xl font-black text-xs uppercase">Save Adjustment</button>
-            <button onclick="closeModal('adjustModal')" class="w-full text-gray-500 text-xs">Cancel</button>
+            <button onclick="saveAdjust()" class="w-full bg-green-600 py-4 rounded-xl font-black">Save Adjustment</button>
         </div>
     </div>
 
@@ -100,46 +96,60 @@
                 <option value="Deputy">Deputy</option>
                 <option value="Cadet">Cadet</option>
             </select>
-            <button onclick="registerNew()" class="w-full btn-purple py-4 text-xs uppercase">Confirm Enrollment</button>
-            <button onclick="closeModal('addModal')" class="w-full text-gray-500 text-xs">Close</button>
+            <button onclick="registerNew()" class="w-full btn-purple py-4">Confirm Enrollment</button>
         </div>
     </div>
 
     <script>
-        const RANKS = { 
-            "Sheriff": 500000000, "Assistant Sheriff": 300000000, "Chief": 200000000, 
-            "Captain": 150000000, "Lieutenant": 100000000, "Sergeant": 75000000, 
-            "Deputy": 50000000, "Cadet": 25000000 
-        };
+        const MASTER_CODE = "5622"; 
+        let pendingAction = null;
+        let pendingId = null;
+
+        const RANKS = { "Sheriff": 500000000, "Assistant Sheriff": 300000000, "Chief": 200000000, "Captain": 150000000, "Lieutenant": 100000000, "Sergeant": 75000000, "Deputy": 50000000, "Cadet": 25000000 };
         
         let officers = JSON.parse(localStorage.getItem('aspd_officers')) || [
             { id: "1", name: "Hero of Jarburg", rank: "Lieutenant", weekly: 100000000, lastPay: "2025-11-29" },
-            { id: "2", name: "Obi wan xenobi", rank: "Sergeant", weekly: 75000000, lastPay: "2025-11-29" },
-            { id: "3", name: "Artos", rank: "Deputy", weekly: 50000000, lastPay: "2025-11-29" },
-            { id: "4", name: "L.merc", rank: "Cadet", weekly: 25000000, lastPay: "2025-11-29" }
+            { id: "2", name: "Obi wan xenobi", rank: "Sergeant", weekly: 75000000, lastPay: "2025-11-29" }
         ];
 
-        let activeId = null;
+        // Security logic
+        function secureAction(action, id = null) {
+            pendingAction = action;
+            pendingId = id;
+            document.getElementById('gatePass').value = "";
+            openModal('gateModal');
+        }
 
-        function save() { localStorage.setItem('aspd_officers', JSON.stringify(officers)); render(); }
+        function verifyGate() {
+            if (document.getElementById('gatePass').value === MASTER_CODE) {
+                closeModal('gateModal');
+                executePending();
+            } else { alert("Unauthorized."); }
+        }
+
+        function executePending() {
+            if (pendingAction === 'add') openModal('addModal');
+            if (pendingAction === 'adjust') openAdjust(pendingId);
+            if (pendingAction === 'delete') removeOfficer(pendingId);
+            if (pendingAction === 'reset') { if(confirm("Wipe all data?")) { officers=[]; localStorage.clear(); render(); } }
+        }
 
         function render() {
             const list = document.getElementById('rosterList');
-            const drop = document.getElementById('termSelect');
-            list.innerHTML = ""; drop.innerHTML = '<option value="">-- Select Employee --</option>';
+            list.innerHTML = "";
             let totalLiab = 0;
 
             officers.forEach(o => {
-                const weeks = Math.max(1, Math.floor((new Date() - new Date(o.lastPay)) / (604800000)));
+                const weeks = Math.max(1, Math.floor((new Date() - new Date(o.lastPay)) / 604800000));
                 totalLiab += (weeks * o.weekly);
 
                 list.innerHTML += `
                     <div class="card relative border-l-4 border-purple-600">
                         <div class="flex justify-between items-start mb-3">
-                            <div><h3 class="font-black text-xl tracking-tighter">${o.name}</h3><p class="text-[9px] text-gray-500 uppercase">ID: ${o.id} | LAST PAY: ${o.lastPay}</p></div>
+                            <div><h3 class="font-black text-xl tracking-tighter">${o.name}</h3><p class="text-[9px] text-gray-500 uppercase">Rank: ${o.rank}</p></div>
                             <div class="flex gap-4">
-                                <button onclick="openAdjust('${o.id}')" class="text-green-500 text-xl"><i class="fa-solid fa-money-bill-transfer"></i></button>
-                                <button onclick="removeOfficer('${o.id}')" class="text-red-500/50 text-xl"><i class="fa-solid fa-trash-can"></i></button>
+                                <button onclick="secureAction('adjust', '${o.id}')" class="text-green-500 text-xl"><i class="fa-solid fa-money-bill-transfer"></i></button>
+                                <button onclick="secureAction('delete', '${o.id}')" class="text-red-500/50 text-xl"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
                         <div class="mb-4">
@@ -149,11 +159,7 @@
                                 <span class="text-xl font-black text-gray-200 tracking-tighter">$${o.weekly.toLocaleString()}.00</span>
                             </div>
                         </div>
-                        <select onchange="rankChange('${o.id}', this.value)" class="bg-purple-600 text-xs font-black py-3 rounded-lg text-center uppercase appearance-none w-full">
-                            ${Object.keys(RANKS).map(r => `<option value="${r}" ${o.rank==r?'selected':''}>Rank: ${r}</option>`).join('')}
-                        </select>
                     </div>`;
-                drop.innerHTML += `<option value="${o.id}">${o.name}</option>`;
             });
             document.getElementById('totalLiability').innerText = "$" + totalLiab.toLocaleString();
             document.getElementById('hireCount').innerText = officers.length;
@@ -162,41 +168,6 @@
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        function openAdjust(id) { activeId = id; document.getElementById('adjName').innerText = "Personnel: " + officers.find(x => x.id === id).name; openModal('adjustModal'); }
-        function saveAdjust() {
-            const o = officers.find(x => x.id === activeId);
-            o.weekly = parseInt(document.getElementById('adjBase').value) + parseInt(document.getElementById('adjBonus').value);
-            logAudit(o.name, "ADJUSTED", `Pay override: $${o.weekly.toLocaleString()}`);
-            closeModal('adjustModal'); save();
-        }
-
-        function rankChange(id, r) {
-            const o = officers.find(x => x.id === id);
-            o.rank = r; o.weekly = RANKS[r];
-            logAudit(o.name, "PROMOTED", `New Rank: ${r}`);
-            save();
-        }
-
-        function registerNew() {
-            const name = document.getElementById('newName').value;
-            const rank = document.getElementById('newRank').value;
-            const n = { id: (officers.length + 1), name, rank, weekly: RANKS[rank], lastPay: new Date().toISOString().split('T')[0] };
-            officers.push(n); logAudit(name, "NEW HIRE", `Enrolled as ${rank}`);
-            closeModal('addModal'); save();
-        }
-
-        function logAudit(name, ev, note) {
-            const log = document.getElementById('auditLog');
-            log.innerHTML = `<div class="audit-entry bg-green-950/5 p-4 rounded-xl mb-3 border border-green-900/10">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-black text-white italic tracking-tighter">${name}</span>
-                    <span class="text-[9px] font-black ${ev=='TERMINATED'?'text-red-500':'text-green-500'} uppercase">${ev}</span>
-                </div>
-                <p class="text-[10px] text-gray-500">${note}</p>
-            </div>` + log.innerHTML;
-        }
-
-        function factoryReset() { if(confirm("WIPE ALL DATA?")) { officers = []; localStorage.clear(); render(); } }
         window.onload = render;
     </script>
 </body>
