@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APSD PAYROLL - TOTAL LOCKDOWN</title>
+    <title>APSD PAYROLL - COMPLETE LOCKDOWN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -13,6 +13,9 @@
         .orange-glow { border: 2px solid #9a3412; box-shadow: 0 0 15px rgba(154, 52, 18, 0.2); }
         .modal-overlay { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(10px); z-index: 100; }
         
+        /* Disabled state styling for locked dropdowns */
+        select:disabled { opacity: 0.5; cursor: not-allowed; background-color: #0d1117 !important; }
+
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #161b22; transition: .4s; border-radius: 34px; border: 1px solid #30363d; }
@@ -128,11 +131,8 @@
             setTimeout(() => t.style.display = 'none', 3000);
         }
 
-        // UNIVERSAL SECURITY WRAPPER
         function adminAction(callback, toggleId = null) {
-            if (isAdmin) { 
-                callback(); 
-            } else { 
+            if (isAdmin) { callback(); } else { 
                 if(toggleId) document.getElementById(toggleId).checked = !document.getElementById(toggleId).checked;
                 showToast("ACCESS DENIED: VIEW ONLY MODE"); 
             }
@@ -240,6 +240,10 @@
                 "absolute top-0 right-0 border border-red-500 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-red-900/20 text-red-500" : 
                 "absolute top-0 right-0 border border-gray-700 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-black/40 text-gray-500";
 
+            // LOGIC: Disable interaction elements if not admin
+            document.getElementById('personnelSelect').disabled = !isAdmin;
+            document.getElementById('actualPaidInput').disabled = !isAdmin;
+
             document.getElementById('totalFund').innerText = `$${history.reduce((sum, h) => sum + (h.type === 'PAYROLL_LOG' ? (h.amount || 0) : 0), 0).toLocaleString()}`;
             
             document.getElementById('rosterContainer').innerHTML = employees.map(e => {
@@ -256,7 +260,7 @@
                         <div><p class="text-[8px] text-yellow-500 font-bold uppercase italic mt-2">Payout with Bonuses</p><p class="text-sm font-bold text-yellow-500">$${currentAccrual.toLocaleString()}.00</p></div>
                     </div>
                     <div class="rank-container mt-4"><div class="rank-display">Rank: ${e.rank} <i class="fa-solid fa-chevron-down text-[10px]"></i></div>
-                        <select onchange="adminAction(() => updateRank('${e.id}', this.value))">${Object.keys(RANKS).map(r => `<option value="${r}" ${r === e.rank ? 'selected' : ''}>${r}</option>`).join('')}</select>
+                        <select ${isAdmin ? '' : 'disabled'} onchange="updateRank('${e.id}', this.value)">${Object.keys(RANKS).map(r => `<option value="${r}" ${r === e.rank ? 'selected' : ''}>${r}</option>`).join('')}</select>
                     </div>
                     <div class="status-btn"><i class="fa-solid fa-hourglass-half"></i> Active Personnel</div>
                     <button onclick="adminAction(() => addBonus('${e.id}'))" class="reward-btn"><i class="fa-solid fa-hand-holding-dollar"></i> Add Bonus / Reward</button>
