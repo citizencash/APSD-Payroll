@@ -7,15 +7,84 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="style.css"> 
-</head>
-<body class="p-4 sm:p-8 min-h-screen" onclick="closeRankChangeModal(event)">
     
+    <style>
+        /* --- YOUR 1:1 CSS STYLES --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d131f;
+            color: #f3f4f6;
+        }
+        .card {
+            background-color: #1f2937;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        input[type="text"], input[type="password"], input[type="date"], select {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: white;
+            transition: all 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+        }
+        .payroll-row-desktop {
+            display: grid;
+            grid-template-columns: 0.5fr 2fr 1.5fr 1.5fr 1.5fr 1.5fr 1.2fr 1fr; 
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            align-items: center;
+        }
+        .payroll-header {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: #9ca3af; 
+            border-bottom: 2px solid #374151;
+            padding-bottom: 0.5rem;
+        }
+        .rank-popover-menu {
+            z-index: 1000; 
+            position: absolute;
+            background-color: #1f2937;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #374151;
+        }
+        .rank-popover-item { padding: 0.75rem 1rem; cursor: pointer; }
+        .rank-popover-item:hover { background-color: #374151; }
+        .toggle-switch { display: flex; align-items: center; cursor: pointer; }
+        .toggle-switch input { display: none; }
+        .toggle-switch-label {
+            position: relative; display: block; width: 50px; height: 28px;
+            background: #4b5563; border-radius: 14px; transition: background 0.3s;
+        }
+        .toggle-switch-label::after {
+            content: ''; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
+            background: #e5e7eb; border-radius: 50%; transition: left 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-switch-label { background: #10b981; }
+        .toggle-switch input:checked + .toggle-switch-label::after { left: 24px; }
+        .data-stream-container { height: 3px; background: #4b5563; border-radius: 999px; overflow: hidden; }
+        .data-stream-line { height: 100%; width: 100%; background: #3b82f6; transition: all 0.5s; }
+    </style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen" onclick="window.closeRankChangeModal(event)">
+
     <div id="securityGate" class="modal-overlay fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm border-t-4 border-yellow-500 p-6 text-center space-y-4">
             <i class="fa-solid fa-shield-halved text-yellow-500 text-4xl"></i>
-            <h2 class="text-xl font-bold text-white uppercase">Admin Authorization</h2>
-            <p class="text-xs text-gray-400">Enter the 4-digit master code to perform this action.</p>
+            <h2 class="text-xl font-bold text-white uppercase italic">Authorization Required</h2>
             <input type="password" id="gateKey" placeholder="••••" class="w-full p-4 rounded-lg bg-gray-900 border border-gray-700 text-center text-2xl tracking-[1rem] font-bold text-white focus:border-yellow-500 outline-none">
             <div class="flex gap-2">
                 <button onclick="verifySecurityGate()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg transition uppercase text-xs">Authorize</button>
@@ -34,86 +103,452 @@
     <div class="max-w-7xl mx-auto space-y-8">
         <header class="text-center pb-4 border-b border-gray-700">
             <h1 class="text-3xl sm:text-4xl font-bold text-yellow-400 tracking-tight uppercase italic">ASPD Payroll Tracker</h1>
-            <div id="authStatus" class="mt-3 text-sm text-gray-500 flex flex-col items-center justify-center space-y-1">
-                <div class="flex items-center space-x-2">
-                    <i id="connectionIcon" class="fa-solid fa-circle-check text-green-500 animate-pulse"></i>
-                    <span id="connectionText" class="uppercase font-mono text-[10px] tracking-widest text-green-500">Uplink Active // Encrypted Data Stream</span>
+            <div class="mt-3 flex flex-col items-center">
+                <div class="flex items-center space-x-2 text-green-500 font-mono text-[10px] tracking-widest uppercase">
+                    <i class="fa-solid fa-circle-check animate-pulse"></i>
+                    <span>Uplink Active // Encrypted Stream</span>
                 </div>
-                <div class="data-stream-container w-48">
-                    <div id="dataStreamLine" class="data-stream-line data-stream-connected"></div>
-                </div>
+                <div class="data-stream-container w-48 mt-1"><div class="data-stream-line"></div></div>
             </div>
         </header>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div class="card text-center border-t-4 border-indigo-500 sm:col-span-2">
-                <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wide flex items-center justify-center mb-2">
-                     <i class="fa-solid fa-building-columns mr-2 text-indigo-500"></i> Total Department Fund (Employee Liability)
-                </h2>
-                <p id="shortfallFundAmount" class="font-extrabold text-3xl text-red-400 transition-all duration-500">0.00</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase mb-2">Total Department Fund (Liability)</h2>
+                <p id="shortfallFundAmount" class="font-extrabold text-3xl text-red-400">0.00</p>
             </div>
             <div class="card text-center border-t-4 border-blue-500">
-                <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wide flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-calculator mr-2 text-blue-500"></i> Payments Logged
-                </h2>
-                <p id="paymentCount" class="font-extrabold text-3xl text-gray-200 transition-all duration-500">0</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase mb-2">Payments Logged</h2>
+                <p id="paymentCount" class="font-extrabold text-3xl text-gray-200">0</p>
             </div>
             <div class="card text-center border-t-4 border-green-500">
-                <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wide flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-user-plus mr-2 text-green-500"></i> New Hires
-                </h2>
-                <p id="newHireCount" class="font-extrabold text-3xl text-green-400 transition-all duration-500">0</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase mb-2">New Hires</h2>
+                <p id="newHireCount" class="font-extrabold text-3xl text-green-400">0</p>
             </div>
             <div class="card text-center border-t-4 border-red-500">
-                <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wide flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-user-minus mr-2 text-red-500"></i> Terminations
-                </h2>
-                <p id="terminationCount" class="font-extrabold text-3xl text-red-400 transition-all duration-500">0</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase mb-2">Terminations</h2>
+                <p id="terminationCount" class="font-extrabold text-3xl text-red-400">0</p>
             </div>
-            <div class="card flex flex-col justify-center space-y-2 border-t-4 border-gray-500 lg:col-span-1 lg:row-start-2 lg:row-end-3">
-                 <button onclick="window.softRefreshApp()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition text-xs flex items-center justify-center"><i class="fa-solid fa-sync mr-1"></i> Refresh</button>
-                 <button onclick="window.openReadmeModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition text-xs flex items-center justify-center"><i class="fa-solid fa-book-open mr-1"></i> Logic</button>
-                 <button onclick="secureRequest('factory')" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 rounded-lg transition text-xs flex items-center justify-center"><i class="fa-solid fa-trash-can mr-1"></i> Reset</button>
+            <div class="card flex flex-col justify-center space-y-2 border-t-4 border-gray-500">
+                <button onclick="window.softRefreshApp()" class="w-full bg-blue-600 py-2 rounded-lg text-xs font-bold uppercase"><i class="fa-solid fa-sync mr-1"></i> Refresh</button>
+                <button onclick="secureRequest('factory')" class="w-full bg-red-700 py-2 rounded-lg text-xs font-bold uppercase"><i class="fa-solid fa-trash-can mr-1"></i> Reset</button>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="card border-l-4 border-yellow-500 lg:col-span-1 h-fit">
-                <h3 class="text-xl font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-hand-holding-dollar mr-2 text-yellow-500"></i> Log Payment Status</h3>
+            <div class="card border-l-4 border-yellow-500 lg:col-span-1">
+                <h3 class="text-xl font-bold text-white mb-4 uppercase italic"><i class="fa-solid fa-hand-holding-dollar mr-2 text-yellow-500"></i> Log Payment</h3>
                 <div class="space-y-4">
                     <select id="transactionEmployeeId" onchange="window.updateExpectedPayForTransaction()" class="w-full p-3 rounded-lg"><option value="" disabled selected>-- Select Employee --</option></select>
-                    <input type="text" id="expectedPay" value="0.00" readonly class="w-full p-3 rounded-lg bg-gray-800 text-yellow-400 font-bold text-lg cursor-not-allowed border-gray-700">
-                    <p id="accrualDetails" class="text-xs text-gray-400">Accrual Weeks: 0.00 | Weekly Accrual: 0.00</p>
-                    <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                        <label class="text-lg font-bold text-green-300">Paid Full Amount</label>
+                    <div>
+                        <label class="text-[10px] uppercase text-gray-500 font-bold">Expected Accrued Lump Sum</label>
+                        <input type="text" id="expectedPay" value="0.00" readonly class="w-full p-3 rounded-lg bg-gray-800 text-yellow-400 font-bold text-lg cursor-not-allowed">
+                        <p id="accrualDetails" class="text-[10px] text-gray-400 mt-1 uppercase italic">Weeks: 0.00 | Weekly Rate: 0.00</p>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                        <label class="text-sm font-bold text-green-300 uppercase">Paid Full Amount</label>
                         <label class="toggle-switch"><input type="checkbox" id="checkFullPay" onchange="window.toggleActualPayInput()"><span class="toggle-switch-label"></span></label>
                     </div>
                     <div id="actualPayContainer">
-                        <input type="text" id="actualPay" oninput="window.formatInputCurrency(this)" class="w-full p-4 rounded-lg text-xl font-bold text-white border-yellow-500">
+                        <label class="text-[10px] uppercase text-yellow-500 font-bold">Actual Amount Paid</label>
+                        <input type="text" id="actualPay" oninput="window.formatInputCurrency(this)" class="w-full p-3 rounded-lg text-lg font-bold">
                     </div>
-                    <button id="logPayStatusButton" onclick="secureRequest('pay')" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg transition text-lg" disabled>Log Transaction</button>
-                    <p id="currentLogStatus" class="text-center text-[10px] text-yellow-200/50 italic uppercase">Authorization Required to Execute</p>
+                    <button id="logPayStatusButton" onclick="secureRequest('pay')" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 rounded-lg transition uppercase italic shadow-lg" disabled>Execute Transaction</button>
+                    <p id="currentLogStatus" class="text-center text-[10px] text-yellow-200/50 italic uppercase">Auth Code Required for Terminal</p>
                 </div>
             </div>
 
             <div class="card lg:col-span-2 border-l-4 border-purple-500">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-white flex items-center"><i class="fa-solid fa-sheet-plastic mr-2 text-purple-400"></i> Active Roster</h3>
-                    <button onclick="secureRequest('add')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold p-3 rounded-xl transition text-sm flex items-center shadow-md"><i class="fa-solid fa-user-plus mr-1"></i> Add Personnel</button>
+                    <h3 class="text-xl font-bold text-white uppercase italic"><i class="fa-solid fa-sheet-plastic mr-2 text-purple-400"></i> Active Roster</h3>
+                    <button onclick="secureRequest('add')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase shadow-lg"><i class="fa-solid fa-user-plus mr-1"></i> Add Personnel</button>
                 </div>
-                <div id="payrollSheetDesktop" class="hidden lg:block overflow-x-auto"><div class="payroll-row-desktop payroll-header"><div>ID</div><div>Name</div><div>Rank</div><div class="text-right">Monthly</div><div class="text-right">Wk Accrual</div><div class="text-right">Last Pay</div><div class="text-center">Status</div><div>Actions</div></div><div id="payrollSheetBodyDesktop" class="space-y-1"></div></div>
+                <div id="payrollSheetDesktop" class="hidden lg:block overflow-x-auto">
+                    <div class="payroll-row-desktop payroll-header"><div>ID</div><div>Name</div><div>Rank</div><div class="text-right">Monthly</div><div class="text-right">Wk Accrual</div><div class="text-right">Last Pay</div><div class="text-center">Status</div><div>Actions</div></div>
+                    <div id="payrollSheetBodyDesktop" class="space-y-1"></div>
+                </div>
                 <div id="payrollSheetMobile" class="lg:hidden space-y-3"></div>
             </div>
         </div>
 
         <div class="card">
-            <h3 class="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Audit History</h3>
+            <h3 class="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2 uppercase italic">Audit History</h3>
             <div id="historyBody" class="min-w-full text-sm"></div>
         </div>
     </div>
 
     <div id="rankChangeModal" class="rank-popover-menu hidden"></div>
-    <div id="errorBox" class="fixed bottom-5 right-5 hidden max-w-sm z-50 transition-opacity duration-300 text-sm font-semibold p-3 rounded-lg shadow-xl"></div>
-    <script src="script.js"></script>
+    <div id="errorBox" class="fixed bottom-5 right-5 hidden max-w-sm z-50 p-3 rounded-lg shadow-xl text-xs font-bold"></div>
+
+    <div id="addEmployeeModal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700 p-6 space-y-4">
+            <h2 class="text-xl font-bold text-white uppercase italic">Add New Personnel</h2>
+            <input type="text" id="newEmployeeName" placeholder="Name / Badge ID" class="w-full p-3 rounded">
+            <select id="newEmployeeRank" onchange="window.updatePayFieldsForNewEmployee()" class="w-full p-3 rounded"></select>
+            <div class="grid grid-cols-2 gap-3">
+                <input type="text" id="newMonthlyPay" placeholder="Monthly (Auto)" class="p-3 rounded bg-gray-900/50" readonly>
+                <input type="text" id="newWeeklyAccrual" placeholder="Weekly (Auto)" class="p-3 rounded bg-gray-900/50" readonly>
+            </div>
+            <input type="hidden" id="newWeeklyBasic" value="0.00">
+            <input type="hidden" id="newWeeklyBonus" value="0.00">
+            <input type="date" id="newPaymentDate" class="w-full p-3 rounded">
+            <div class="flex justify-end gap-2">
+                <button onclick="window.closeAddEmployeeModal()" class="px-4 py-2 text-gray-400 font-bold uppercase text-xs">Cancel</button>
+                <button onclick="secureRequest('addFinal')" class="bg-purple-600 px-6 py-2 rounded-lg font-bold text-white uppercase text-xs">Add to Sheet</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="payEditModal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-xl w-full max-w-md border border-gray-700 p-6 space-y-4">
+            <h2 class="text-xl font-bold text-white uppercase italic">Manual Pay Adjustment</h2>
+            <p id="payEditEmployeeName" class="text-indigo-400 font-bold"></p>
+            <div class="grid grid-cols-2 gap-3">
+                <input type="text" id="payEditBasic" placeholder="Base Accrual" oninput="window.formatInputCurrency(this)" class="p-3 rounded">
+                <input type="text" id="payEditBonus" placeholder="Bonus Accrual" oninput="window.formatInputCurrency(this)" class="p-3 rounded">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="window.closePayEditModal()" class="px-4 py-2 text-gray-400 font-bold uppercase text-xs">Cancel</button>
+                <button onclick="secureRequest('editPayFinal')" class="bg-green-600 px-6 py-2 rounded-lg font-bold text-white uppercase text-xs">Save Adjustments</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- MASTER CORE & SECURITY ---
+        const MASTER_CODE = "5622";
+        let pendingAction = null;
+        let pendingArgs = [];
+        const EMPLOYEE_KEY = 'ASPD_Employees';
+        const HISTORY_KEY = 'ASPD_Transactions';
+        const INITIAL_SETUP_KEY = 'ASPD_InitialSetup';
+
+        const WEEKLY_PAY_SCALE = {
+            "Sheriff": { basic: 500000000.00, bonus: 0.00 },
+            "Assistant Sheriff": { basic: 300000000.00, bonus: 0.00 },
+            "Chief": { basic: 200000000.00, bonus: 0.00 },
+            "Captain": { basic: 150000000.00, bonus: 0.00 },
+            "Lieutenant": { basic: 100000000.00, bonus: 0.00 },
+            "Sergeant": { basic: 75000000.00, bonus: 0.00 },
+            "Deputy": { basic: 50000000.00, bonus: 0.00 },
+            "Cadet": { basic: 25000000.00, bonus: 0.00 },
+        };
+        const MONTHLY_MULTIPLIER = 4.0; 
+        const RANKS = Object.keys(WEEKLY_PAY_SCALE);
+
+        let allEmployees = []; 
+        let transactionHistory = [];
+        let shortfallFund = 0; 
+        let paymentCount = 0;
+        let newHireCount = 0;
+        let terminationCount = 0;
+        const els = {}; 
+
+        // SECURITY HANDLERS
+        window.secureRequest = (action, ...args) => {
+            pendingAction = action;
+            pendingArgs = args;
+            document.getElementById('gateKey').value = "";
+            document.getElementById('securityGate').classList.remove('hidden');
+            document.getElementById('gateKey').focus();
+        };
+
+        window.closeSecurityGate = () => {
+            document.getElementById('securityGate').classList.add('hidden');
+            pendingAction = null;
+            pendingArgs = [];
+        };
+
+        window.verifySecurityGate = () => {
+            if (document.getElementById('gateKey').value === MASTER_CODE) {
+                const action = pendingAction;
+                const args = pendingArgs;
+                window.closeSecurityGate();
+                if (action === 'pay') window.logPayTransaction();
+                if (action === 'add') window.openAddEmployeeModal();
+                if (action === 'addFinal') window.addEmployee();
+                if (action === 'delete') window.removeEmployee(...args);
+                if (action === 'rank') window.updateEmployeeRank(...args);
+                if (action === 'editPay') window.openPayEditModal(...args);
+                if (action === 'editPayFinal') window.saveManualPayChange();
+                if (action === 'factory') window.performFactoryReset();
+                if (action === 'restore') window.restoreEmployee(...args);
+            } else {
+                alert("ACCESS DENIED: INCORRECT MASTER CODE");
+                document.getElementById('gateKey').value = "";
+            }
+        };
+
+        // DOM CACHE & INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            cacheDOMElements();
+            populateRankDropdowns();
+            setupLocalApp();
+        });
+
+        function cacheDOMElements() {
+            els.shortfallDisplay = document.getElementById('shortfallFundAmount');
+            els.paymentCount = document.getElementById('paymentCount'); 
+            els.newHireCount = document.getElementById('newHireCount'); 
+            els.terminationCount = document.getElementById('terminationCount'); 
+            els.historyBody = document.getElementById('historyBody');
+            els.payrollSheetBodyDesktop = document.getElementById('payrollSheetBodyDesktop');
+            els.payrollSheetBodyMobile = document.getElementById('payrollSheetMobile');
+            els.loadingOverlay = document.getElementById('loadingOverlay');
+            els.errorBox = document.getElementById('errorBox');
+            els.addEmployeeModal = document.getElementById('addEmployeeModal');
+            els.rankChangeModal = document.getElementById('rankChangeModal'); 
+            els.payEditModal = document.getElementById('payEditModal');
+            els.payEditName = document.getElementById('payEditEmployeeName');
+            els.payEditBasic = document.getElementById('payEditBasic');
+            els.payEditBonus = document.getElementById('payEditBonus');
+            els.transId = document.getElementById('transactionEmployeeId');
+            els.transExp = document.getElementById('expectedPay');
+            els.accrualDetails = document.getElementById('accrualDetails'); 
+            els.checkFullPay = document.getElementById('checkFullPay'); 
+            els.actualPayContainer = document.getElementById('actualPayContainer');
+            els.transActual = document.getElementById('actualPay');
+            els.logButton = document.getElementById('logPayStatusButton');
+            els.logStatusText = document.getElementById('currentLogStatus');
+            els.newName = document.getElementById('newEmployeeName');
+            els.newRank = document.getElementById('newEmployeeRank');
+            els.newDate = document.getElementById('newPaymentDate');
+            els.newMonthlyPay = document.getElementById('newMonthlyPay'); 
+            els.newWeeklyAccrual = document.getElementById('newWeeklyAccrual'); 
+            els.newWeeklyBasic = document.getElementById('newWeeklyBasic'); 
+            els.newWeeklyBonus = document.getElementById('newWeeklyBonus'); 
+        }
+
+        function populateRankDropdowns() {
+            const html = RANKS.map(r => `<option value="${r}">${r}</option>`).join('');
+            els.newRank.innerHTML = `<option value="" disabled selected>-- Select Rank --</option>` + html;
+        }
+
+        // --- MATH & STORAGE ENGINE (YOUR 1:1 LOGIC) ---
+        function roundCurrency(a) { return Math.round((a + Number.EPSILON) * 100) / 100; }
+        function formatCurrency(a) { return parseFloat(roundCurrency(a)).toLocaleString('en-US', { minimumFractionDigits: 2 }); }
+
+        function calculateWeeksElapsed(start, end) {
+            const diff = Math.abs(end - new Date(start).getTime());
+            return Math.floor(diff / (1000 * 60 * 60 * 24 * 7));
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem(EMPLOYEE_KEY, JSON.stringify(allEmployees));
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(transactionHistory));
+            localStorage.setItem(INITIAL_SETUP_KEY, 'true'); 
+            return true;
+        }
+
+        function loadFromLocalStorage() {
+            const storedEmployees = localStorage.getItem(EMPLOYEE_KEY);
+            const storedHistory = localStorage.getItem(HISTORY_KEY);
+            if (localStorage.getItem(INITIAL_SETUP_KEY) === 'true' && storedEmployees) {
+                allEmployees = JSON.parse(storedEmployees);
+                transactionHistory = JSON.parse(storedHistory);
+            } else {
+                allEmployees = []; 
+                transactionHistory = [];
+                saveToLocalStorage();
+            }
+            calculateFundsFromHistory(); 
+            renderAll();
+        }
+
+        function setupLocalApp() {
+            loadFromLocalStorage();
+            setTimeout(() => {
+                els.loadingOverlay.classList.add('opacity-0');
+                setTimeout(() => els.loadingOverlay.classList.add('hidden'), 500);
+            }, 1000);
+        }
+
+        async function updateLocalState() {
+            saveToLocalStorage();
+            window.softRefreshApp(false);
+        }
+
+        window.softRefreshApp = (f = true) => {
+            calculateFundsFromHistory(); 
+            renderAll();
+            if (f) showMessage("System Refreshed", false);
+        };
+
+        function calculateFundsFromHistory() {
+            shortfallFund = 0; paymentCount = 0;
+            transactionHistory.forEach(t => {
+                if (t.type === 'PAYMENT_LOG') {
+                    paymentCount++;
+                    if (t.mispay > 0) shortfallFund += t.mispay;
+                }
+            });
+            terminationCount = transactionHistory.filter(t => t.type === 'TERMINATION').length;
+            newHireCount = transactionHistory.filter(t => t.type === 'NEW_HIRE' || t.type === 'REHIRE').length;
+        }
+
+        // --- TRANSACTION LOGIC ---
+        window.toggleActualPayInput = () => {
+            const isFull = els.checkFullPay.checked;
+            els.transActual.disabled = isFull;
+            if (isFull) els.transActual.value = els.transExp.value;
+        };
+
+        window.updateExpectedPayForTransaction = () => {
+            const emp = allEmployees.find(e => e.id === els.transId.value);
+            if (emp) {
+                const weeks = calculateWeeksElapsed(emp.paymentDate, Date.now());
+                const expected = roundCurrency(emp.weeklyAccrual * weeks);
+                els.transExp.value = formatCurrency(expected);
+                els.accrualDetails.textContent = `Weeks: ${weeks} | Weekly Rate: ${formatCurrency(emp.weeklyAccrual)}`;
+                els.logButton.disabled = false;
+                els.logStatusText.textContent = `Ready for ${emp.name}`;
+            }
+        };
+
+        window.logPayTransaction = async () => {
+            const empIndex = allEmployees.findIndex(e => e.id === els.transId.value);
+            const emp = allEmployees[empIndex];
+            const weeks = calculateWeeksElapsed(emp.paymentDate, Date.now());
+            if (weeks === 0) return showMessage("Need 1 full week elapsed", true);
+
+            const expected = roundCurrency(emp.weeklyAccrual * weeks);
+            const actual = roundCurrency(parseFloat(els.transActual.value.replace(/,/g, '')));
+            const mispay = Math.max(0, roundCurrency(expected - actual));
+            const status = mispay > 0 ? 'SHORTFALL' : 'FULL_PAY';
+
+            allEmployees[empIndex].lastPaymentStatus = status;
+            allEmployees[empIndex].paymentDate = new Date().toISOString().split('T')[0];
+
+            transactionHistory.unshift({
+                id: Date.now(), timestamp: new Date().toLocaleString(),
+                type: 'PAYMENT_LOG', name: emp.name, rank: emp.rank,
+                expected, actual, mispay, status, weeksPaid: weeks
+            });
+
+            updateLocalState();
+            showMessage(`Payment Logged for ${emp.name}`, false);
+            els.transId.value = "";
+            window.updateExpectedPayForTransaction();
+        };
+
+        // --- ROSTER LOGIC ---
+        window.addEmployee = async () => {
+            const name = els.newName.value;
+            const rank = els.newRank.value;
+            const date = els.newDate.value;
+            const weeklyAccrual = roundCurrency(parseFloat(els.newWeeklyAccrual.value.replace(/,/g, '')));
+            
+            if (!name || !rank || !date) return showMessage("Fill all fields", true);
+
+            allEmployees.push({
+                id: 'emp_' + Date.now(), name, rank,
+                weeklyAccrual, monthlyTotal: roundCurrency(weeklyAccrual * 4),
+                paymentDate: date, lastPaymentStatus: 'UNPAID'
+            });
+
+            transactionHistory.unshift({
+                id: Date.now(), timestamp: new Date().toLocaleString(),
+                type: 'NEW_HIRE', name, rank, notes: `Initial Rate: ${formatCurrency(weeklyAccrual)}`
+            });
+
+            updateLocalState();
+            window.closeAddEmployeeModal();
+            showMessage(`${name} Added`, false);
+        };
+
+        window.removeEmployee = (id) => {
+            const idx = allEmployees.findIndex(e => e.id === id);
+            const emp = allEmployees[idx];
+            transactionHistory.unshift({
+                id: Date.now(), timestamp: new Date().toLocaleString(),
+                type: 'TERMINATION', name: emp.name, rank: emp.rank
+            });
+            allEmployees.splice(idx, 1);
+            updateLocalState();
+        };
+
+        window.updateEmployeeRank = (id, rank) => {
+            const idx = allEmployees.findIndex(e => e.id === id);
+            const old = allEmployees[idx].rank;
+            const scale = WEEKLY_PAY_SCALE[rank];
+            allEmployees[idx].rank = rank;
+            allEmployees[idx].weeklyAccrual = scale.basic;
+            allEmployees[idx].monthlyTotal = scale.basic * 4;
+            
+            transactionHistory.unshift({
+                id: Date.now(), timestamp: new Date().toLocaleString(),
+                type: 'RANK_CHANGE', name: allEmployees[idx].name, oldRank: old, newRank: rank
+            });
+            updateLocalState();
+        };
+
+        // --- UI RENDERING ---
+        function renderAll() {
+            els.shortfallDisplay.textContent = formatCurrency(shortfallFund);
+            els.paymentCount.textContent = paymentCount;
+            els.newHireCount.textContent = newHireCount;
+            els.terminationCount.textContent = terminationCount;
+            renderPayrollSheet();
+            renderHistory();
+            renderTransactionSelect();
+        }
+
+        function renderPayrollSheet() {
+            const html = allEmployees.map((e, i) => `
+                <div class="payroll-row-desktop bg-gray-700/30 border-b border-gray-700/50 text-[11px]">
+                    <div>${i+1}</div>
+                    <div class="font-bold">${e.name}</div>
+                    <button onclick="secureRequest('rank', '${e.id}', '${e.rank}')" class="bg-purple-600 px-2 py-1 rounded text-[10px] uppercase font-bold">${e.rank}</button>
+                    <div class="text-right text-indigo-400 font-bold">${formatCurrency(e.monthlyTotal)}</div>
+                    <div class="text-right">${formatCurrency(e.weeklyAccrual)}</div>
+                    <div class="text-center">${e.paymentDate}</div>
+                    <div class="text-center">${e.lastPaymentStatus}</div>
+                    <div class="text-right">
+                        <button onclick="secureRequest('delete', '${e.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            els.payrollSheetBodyDesktop.innerHTML = html;
+        }
+
+        function renderHistory() {
+            const html = transactionHistory.map(t => `
+                <div class="p-2 border-b border-gray-700/50 flex justify-between uppercase font-mono text-[10px]">
+                    <span>${t.timestamp}</span>
+                    <span class="font-bold text-yellow-500">${t.type}</span>
+                    <span>${t.name}</span>
+                    <span class="${t.mispay > 0 ? 'text-red-400' : 'text-green-400'}">${t.mispay ? formatCurrency(t.mispay) : ''}</span>
+                </div>
+            `).join('');
+            els.historyBody.innerHTML = html;
+        }
+
+        function renderTransactionSelect() {
+            const cur = els.transId.value;
+            els.transId.innerHTML = '<option value="" disabled selected>-- Select Employee --</option>' + 
+                allEmployees.map(e => `<option value="${e.id}">${e.name} (${e.rank})</option>`).join('');
+            if (cur) els.transId.value = cur;
+        }
+
+        window.updatePayFieldsForNewEmployee = () => {
+            const scale = WEEKLY_PAY_SCALE[els.newRank.value];
+            if (scale) {
+                els.newWeeklyAccrual.value = formatCurrency(scale.basic);
+                els.newMonthlyPay.value = formatCurrency(scale.basic * 4);
+            }
+        };
+
+        window.performFactoryReset = () => { localStorage.clear(); window.location.reload(); };
+        window.openAddEmployeeModal = () => els.addEmployeeModal.classList.remove('hidden');
+        window.closeAddEmployeeModal = () => els.addEmployeeModal.classList.add('hidden');
+        window.formatInputCurrency = (i) => { let v = i.value.replace(/[^\d.]/g, ''); i.value = v ? formatCurrency(parseFloat(v)) : ''; };
+        
+        function showMessage(m, e) {
+            els.errorBox.textContent = m;
+            els.errorBox.className = `fixed bottom-5 right-5 p-3 rounded-lg shadow-xl text-white ${e ? 'bg-red-600' : 'bg-green-600'}`;
+            els.errorBox.classList.remove('hidden');
+            setTimeout(() => els.errorBox.classList.add('hidden'), 3000);
+        }
+    </script>
 </body>
 </html>
