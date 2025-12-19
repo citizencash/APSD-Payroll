@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        body { background-color: #05070a; color: #ffffff; font-family: sans-serif; }
+        body { background-color: #05070a; color: #ffffff; font-family: sans-serif; overflow-x: hidden; }
         .glow-card {
             background: #0d1117;
             border-radius: 1.5rem;
@@ -22,10 +22,22 @@
             background: #1e1b4b;
             border: none;
             border-radius: 0.75rem;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1rem;
             width: 100%;
             appearance: none;
             font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #a5b4fc;
+        }
+
+        /* Audit List Styling */
+        .audit-row {
+            border-bottom: 1px solid #161b22;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
         }
@@ -36,18 +48,18 @@
     <div id="securityGate" class="modal-overlay fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-[#0d1117] rounded-3xl border-t-4 border-orange-600 p-8 w-full max-w-sm text-center">
             <h2 class="text-xl font-bold uppercase italic mb-6">Authorization Required</h2>
-            <input type="password" id="gateKey" placeholder="****" maxlength="4" class="w-full bg-gray-900 p-4 rounded-xl text-center text-2xl font-bold mb-6 outline-none border border-gray-700">
+            <input type="password" id="gateKey" placeholder="****" maxlength="4" class="w-full bg-gray-900 p-4 rounded-xl text-center text-2xl font-bold mb-6 outline-none border border-gray-700 text-white">
             <div class="flex gap-3">
                 <button onclick="verifySecurityGate()" class="flex-1 bg-orange-700 py-3 rounded-xl font-bold uppercase">Verify</button>
-                <button onclick="closeSecurityGate()" class="flex-1 bg-gray-800 py-3 rounded-xl font-bold uppercase">Cancel</button>
+                <button onclick="closeSecurityGate()" class="flex-1 bg-gray-800 py-3 rounded-xl font-bold uppercase text-gray-400">Cancel</button>
             </div>
         </div>
     </div>
 
     <div class="max-w-md mx-auto space-y-6">
         <header class="text-center py-4">
-            <h1 class="text-3xl font-black italic text-yellow-500 tracking-tighter">ASPD PAYROLL TRACKER</h1>
-            <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">● UPLINK ACTIVE // CLOUD SYNC</p>
+            <h1 class="text-3xl font-black italic text-yellow-500 tracking-tighter uppercase">ASPD Payroll Tracker</h1>
+            <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">● Uplink Active // Cloud Sync</p>
         </header>
 
         <div class="glow-card orange-glow text-center">
@@ -66,39 +78,53 @@
             </div>
         </div>
 
+        <button onclick="secureRequest('factory')" class="w-full bg-red-900/10 border border-red-900/50 text-red-500 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest">
+            <i class="fa-solid fa-skull mr-2"></i> Secure Factory Reset
+        </button>
+
         <div class="glow-card orange-glow">
             <h3 class="font-bold text-lg mb-4 uppercase italic flex items-center">
                 <i class="fa-solid fa-file-invoice-dollar text-orange-500 mr-2"></i> Payment Terminal
             </h3>
             <div class="space-y-4">
-                <select id="personnelSelect" onchange="updateTerminal()" class="w-full bg-[#161b22] border border-[#30363d] p-3 rounded-xl text-white outline-none">
-                    <option value="">-- Select Personnel --</option>
-                </select>
+                <div>
+                    <label class="text-[10px] text-gray-500 font-bold uppercase mb-1 block">Select Personnel</label>
+                    <select id="personnelSelect" onchange="updateTerminal()" class="w-full bg-[#161b22] border border-[#30363d] p-3 rounded-xl text-white outline-none font-bold">
+                        <option value="">-- Select Personnel --</option>
+                    </select>
+                </div>
                 <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
                     <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Expected Accrued Lump Sum</label>
                     <p id="accrualAmount" class="text-3xl font-bold">$0.00</p>
                     <p id="accrualDetail" class="text-[9px] text-gray-600 uppercase font-bold mt-1">Weeks: 0.00 | Weekly Rate: $0.00</p>
                 </div>
-                <button onclick="secureRequest('pay')" class="w-full bg-orange-700 py-4 rounded-xl font-black uppercase italic tracking-widest">Execute Transaction</button>
+                <button onclick="secureRequest('pay')" class="w-full bg-orange-700 py-4 rounded-xl font-black uppercase italic tracking-widest text-white shadow-lg shadow-orange-900/20">Execute Transaction</button>
+                <p class="text-center text-[9px] text-orange-500/50 italic font-bold">AUTH CODE REQUIRED FOR TERMINAL</p>
             </div>
         </div>
 
-        <div class="flex justify-between items-center">
-            <h2 class="text-xl font-black italic uppercase">Active Personnel</h2>
+        <div class="flex justify-between items-center mt-8">
+            <h2 class="text-xl font-black italic uppercase italic">Active Roster</h2>
             <button onclick="secureRequest('add')" class="bg-purple-700 px-4 py-2 rounded-xl text-xs font-bold uppercase shadow-lg">
                 <i class="fa-solid fa-user-plus mr-1"></i> Add Personnel
             </button>
         </div>
 
-        <div id="rosterContainer" class="space-y-4 pb-10">
+        <div id="rosterContainer" class="space-y-4">
             </div>
+
+        <div class="mt-8 mb-10">
+            <h3 class="text-lg font-black italic uppercase border-b border-gray-800 pb-2 mb-4">Audit History</h3>
+            <div id="auditLog" class="space-y-1">
+                </div>
+        </div>
     </div>
 
     <div id="addModal" class="modal-overlay fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-[#0d1117] rounded-3xl p-6 w-full max-w-sm border border-purple-500">
             <h2 class="text-xl font-bold uppercase italic mb-4">Register Officer</h2>
-            <input type="text" id="newName" placeholder="Name / Badge ID" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-3 text-white">
-            <select id="newRank" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-3 text-white">
+            <input type="text" id="newName" placeholder="Name / Badge ID" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-3 text-white outline-none">
+            <select id="newRank" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-3 text-white outline-none font-bold">
                 <option value="Sheriff">Sheriff</option>
                 <option value="Assistant Sheriff">Assistant Sheriff</option>
                 <option value="Chief">Chief</option>
@@ -108,8 +134,11 @@
                 <option value="Deputy">Deputy</option>
                 <option value="Cadet">Cadet</option>
             </select>
-            <input type="date" id="newDate" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-4 text-white">
-            <button onclick="addEmployee()" class="w-full bg-purple-700 py-3 rounded-xl font-bold uppercase">Add to Roster</button>
+            <input type="date" id="newDate" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-4 text-white outline-none">
+            <div class="flex gap-2">
+                <button onclick="addEmployee()" class="flex-1 bg-purple-700 py-3 rounded-xl font-bold uppercase">Confirm</button>
+                <button onclick="document.getElementById('addModal').classList.add('hidden')" class="flex-1 bg-gray-800 py-3 rounded-xl font-bold uppercase text-gray-400">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -128,6 +157,7 @@
         function secureRequest(action) {
             pendingAction = action;
             document.getElementById('securityGate').classList.remove('hidden');
+            document.getElementById('gateKey').value = "";
             document.getElementById('gateKey').focus();
         }
 
@@ -138,8 +168,9 @@
                 closeSecurityGate();
                 if (pendingAction === 'pay') processPayment();
                 if (pendingAction === 'add') document.getElementById('addModal').classList.remove('hidden');
+                if (pendingAction === 'factory') { localStorage.clear(); location.reload(); }
             } else {
-                alert("INVALID CODE");
+                alert("ACCESS DENIED");
                 document.getElementById('gateKey').value = "";
             }
         }
@@ -154,14 +185,35 @@
             const name = document.getElementById('newName').value;
             const rank = document.getElementById('newRank').value;
             const date = document.getElementById('newDate').value;
+            if(!name || !date) return alert("Missing Info");
+
             employees.push({ id: employees.length + 1, name, rank, lastPay: date });
+            history.unshift({ 
+                time: new Date().toLocaleString(), 
+                type: 'NEW_HIRE', 
+                name: name.toUpperCase() 
+            });
             document.getElementById('addModal').classList.add('hidden');
+            save();
+        }
+
+        function removeEmployee(id) {
+            const emp = employees.find(e => e.id == id);
+            history.unshift({ 
+                time: new Date().toLocaleString(), 
+                type: 'TERMINATION', 
+                name: emp.name.toUpperCase() 
+            });
+            employees = employees.filter(e => e.id != id);
             save();
         }
 
         function updateTerminal() {
             const id = document.getElementById('personnelSelect').value;
-            if(!id) return;
+            if(!id) {
+                document.getElementById('accrualAmount').innerText = "$0.00";
+                return;
+            }
             const emp = employees.find(e => e.id == id);
             const weeks = Math.max(0, Math.floor((Date.now() - new Date(emp.lastPay)) / (1000*60*60*24*7)));
             const amount = RANKS[emp.rank] * weeks;
@@ -171,19 +223,31 @@
 
         function processPayment() {
             const id = document.getElementById('personnelSelect').value;
+            if(!id) return;
             const emp = employees.find(e => e.id == id);
             const weeks = Math.max(1, Math.floor((Date.now() - new Date(emp.lastPay)) / (1000*60*60*24*7)));
-            history.push({ amount: RANKS[emp.rank] * weeks });
+            const total = RANKS[emp.rank] * weeks;
+
+            history.unshift({ 
+                time: new Date().toLocaleString(), 
+                type: 'PAYMENT', 
+                name: emp.name.toUpperCase(),
+                amount: total
+            });
+
             emp.lastPay = new Date().toISOString().split('T')[0];
+            document.getElementById('personnelSelect').value = "";
+            updateTerminal();
             save();
         }
 
         function render() {
             document.getElementById('hireCount').innerText = employees.length;
-            const total = history.reduce((sum, h) => sum + h.amount, 0);
-            document.getElementById('totalFund').innerText = `$${total.toLocaleString()}`;
+            document.getElementById('payCount').innerText = history.filter(h => h.type === 'PAYMENT').length;
+            const totalPaid = history.reduce((sum, h) => sum + (h.amount || 0), 0);
+            document.getElementById('totalFund').innerText = `$${totalPaid.toLocaleString()}`;
 
-            // 1:1 Card Rendering (Ref: 4411/4413)
+            // Roster Cards (Ref: 4411/4413)
             document.getElementById('rosterContainer').innerHTML = employees.map(e => `
                 <div class="glow-card purple-glow">
                     <div class="flex justify-between items-start">
@@ -193,9 +257,9 @@
                                 ID: ${e.id} | LAST PAY: ${e.lastPay}
                             </p>
                         </div>
-                        <div class="flex gap-3">
+                        <div class="flex gap-4">
                             <i class="fa-solid fa-money-bill-1-wave text-green-500 text-xl"></i>
-                            <i class="fa-solid fa-trash text-red-900 text-xl"></i>
+                            <i onclick="removeEmployee(${e.id})" class="fa-solid fa-trash text-red-900 text-xl cursor-pointer"></i>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -203,15 +267,25 @@
                         <p class="text-3xl font-black">$${RANKS[e.rank].toLocaleString()}.00</p>
                     </div>
                     <div class="mt-4">
-                        <select class="rank-select text-white">
-                            <option selected>RANK: ${e.rank}</option>
+                        <select class="rank-select">
+                            <option>RANK: ${e.rank.toUpperCase()}</option>
                         </select>
                     </div>
                 </div>
             `).join('');
 
+            // Dropdown
             document.getElementById('personnelSelect').innerHTML = `<option value="">-- Select Personnel --</option>` + 
-                employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+                employees.map(e => `<option value="${e.id}">${e.name} (${e.rank})</option>`).join('');
+
+            // Audit History (Ref: 4425)
+            document.getElementById('auditLog').innerHTML = history.map(h => `
+                <div class="audit-row">
+                    <span class="text-gray-600">${h.time}</span>
+                    <span class="text-yellow-600 px-2">${h.type}</span>
+                    <span class="text-white">${h.name}</span>
+                </div>
+            `).join('');
         }
 
         window.onload = render;
