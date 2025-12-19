@@ -25,6 +25,8 @@
         .rank-display { font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
 
         .status-btn { background: #1e3a8a; color: #ffffff; border-radius: 0.75rem; padding: 8px; width: 100%; font-size: 10px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .reward-btn { background: #064e3b; color: #ffffff; border-radius: 0.75rem; padding: 8px; width: 100%; font-size: 10px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
+        
         .audit-entry { border-bottom: 1px solid #161b22; padding: 20px 0; display: flex; justify-content: space-between; }
         
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #064e3b; color: #fff; padding: 14px 24px; border-radius: 8px; font-weight: bold; font-size: 12px; border-left: 5px solid #22c55e; z-index: 500; display: none; width: 90%; max-width: 400px; text-align: center; }
@@ -117,6 +119,7 @@
 
         let employees = JSON.parse(localStorage.getItem('ASPD_Employees')) || [];
         let history = JSON.parse(localStorage.getItem('ASPD_History')) || [];
+        let pendingAction = null;
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -163,8 +166,6 @@
             const expected = parseFloat(document.getElementById('accrualAmount').innerText.replace(/,/g, ''));
             const actual = parseFloat(document.getElementById('actualPaidInput').value.replace(/,/g, '')) || 0;
             const emp = employees.find(e => e.id == id);
-            
-            // LOGIC: Only the UNPAID amount gets rerolled into the Fund.
             const rerollAmount = expected - actual;
             
             history.unshift({ type: 'PAYROLL_LOG', name: emp.name, rank: emp.rank, amount: rerollAmount, paid: actual, timestamp: new Date().toLocaleDateString() });
@@ -187,6 +188,16 @@
             save();
         }
 
+        function addBonus(id) {
+            const emp = employees.find(e => e.id == id);
+            const amount = prompt(`Enter Bonus/Reward Amount for ${emp.name}:`);
+            if (amount && !isNaN(amount)) {
+                history.unshift({ type: 'BONUS_PAY', name: emp.name, rank: emp.rank, amount: 0, paid: parseFloat(amount), timestamp: new Date().toLocaleDateString() });
+                save();
+                showToast(`BONUS OF $${parseFloat(amount).toLocaleString()} LOGGED FOR ${emp.name}`);
+            }
+        }
+
         function updateRank(id, newRank) {
             const emp = employees.find(e => e.id == id);
             const oldRank = emp.rank;
@@ -197,9 +208,11 @@
 
         function terminateEmp(id) {
             const emp = employees.find(e => e.id == id);
-            history.unshift({ type: 'TERMINATION', name: emp.name, rank: emp.rank, empData: {...emp}, timestamp: new Date().toLocaleDateString() });
-            employees = employees.filter(e => e.id != id);
-            save();
+            if (confirm(`ARE YOU SURE? This will remove ${emp.name} from the active roster and log a termination audit.`)) {
+                history.unshift({ type: 'TERMINATION', name: emp.name, rank: emp.rank, empData: {...emp}, timestamp: new Date().toLocaleDateString() });
+                employees = employees.filter(e => e.id != id);
+                save();
+            }
         }
 
         function restoreEmp(idx) {
@@ -229,6 +242,8 @@
                     <div class="rank-container mt-4"><div class="rank-display">Rank: ${e.rank} <i class="fa-solid fa-chevron-down text-[10px]"></i></div>
                         <select onchange="updateRank('${e.id}', this.value)">${Object.keys(RANKS).map(r => `<option value="${r}" ${r === e.rank ? 'selected' : ''}>${r}</option>`).join('')}</select>
                     </div>
+                    <div class="status-btn"><i class="fa-solid fa-hourglass-half"></i> Active Personnel</div>
+                    <button onclick="addBonus('${e.id}')" class="reward-btn"><i class="fa-solid fa-hand-holding-dollar"></i> Award Bonus / Reward</button>
                 </div>`).join('');
 
             document.getElementById('personnelSelect').innerHTML = `<option value="">-- Select Employee --</option>` + 
@@ -239,6 +254,7 @@
                 let restoreBtn = "";
                 if(h.type === 'TERMINATION') { color = "text-red-600"; icon = "fa-user-minus"; restoreBtn = `<button onclick="restoreEmp(${i})" class="bg-green-900 text-white text-[9px] px-2 py-1 rounded mt-2">RESTORE</button>`; }
                 if(h.type === 'RANK_UPDATE') { color = "text-purple-500"; icon = "fa-angles-up"; label = `PROMOTION: ${h.rank}`; }
+                if(h.type === 'BONUS_PAY') { color = "text-blue-400"; icon = "fa-star"; label = `REWARD: $${h.paid.toLocaleString()}`; }
                 if(h.type === 'PAYROLL_LOG') { color = h.amount > 0 ? "text-yellow-500" : "text-green-500"; icon = "fa-sack-dollar"; label = h.amount > 0 ? "FUND REROLL (UNPAID)" : "FULL PAY PICKED UP"; }
                 
                 return `
@@ -246,7 +262,7 @@
                     <div class="flex gap-3"><i class="fa-solid ${icon} ${color} mt-1"></i>
                         <div><p class="text-[10px] text-gray-500 font-bold">Ref: ${h.timestamp}</p><p class="text-lg font-black leading-tight">${h.name}</p><p class="text-[9px] text-gray-500 font-bold uppercase">${label}</p>${restoreBtn}</div>
                     </div>
-                    <div class="text-right text-[9px] font-bold ${color} uppercase"><p>Fund Impact</p><p class="text-white text-xs">$${(h.amount || 0).toLocaleString()}</p></div>
+                    <div class="text-right text-[9px] font-bold ${color} uppercase"><p>Entry Type</p><p class="text-white text-xs">$${(h.paid || h.amount || 0).toLocaleString()}</p></div>
                 </div>`}).join('');
         }
         window.onload = render;
