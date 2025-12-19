@@ -3,178 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASPD LIVE PAYROLL SYSTEM</title>
+    <title>ASPD GLOBAL PAYROLL v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0d131f; color: #f3f4f6; }
-        .card { background-color: #1f2937; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); border-radius: 1rem; padding: 1.5rem; border: 1px solid #30363d; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-2px); }
-        input, select { background-color: #374151; border: 1px solid #4b5563; color: white; padding: 0.75rem; border-radius: 0.5rem; }
-        .payroll-row-desktop { display: grid; grid-template-columns: 0.5fr 2fr 1.5fr 1.5fr 1fr; gap: 0.5rem; padding: 1rem; align-items: center; }
-        .payroll-header { font-weight: 700; text-transform: uppercase; font-size: 0.75rem; color: #9ca3af; border-bottom: 2px solid #374151; }
-        .status-pulse { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .online { background-color: #238636; box-shadow: 0 0 10px #238636; }
-        .offline { background-color: #da3633; box-shadow: 0 0 10px #da3633; }
+        :root { --glass: rgba(15, 23, 42, 0.8); --gold: #eab308; }
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f8fafc; min-height: 100vh; }
+        .font-header { font-family: 'Orbitron', sans-serif; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .btn-gold { background: linear-gradient(135deg, #facc15, #ca8a04); color: #000; font-weight: 800; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(234, 179, 8, 0.4); }
+        .status-tag { font-size: 0.65rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+        .rank-badge { background: rgba(99, 102, 241, 0.2); border: 1px solid #6366f1; color: #818cf8; }
+        input, select { background: #1e293b !important; border: 1px solid #334155 !important; color: white !important; }
     </style>
 </head>
-<body class="p-4 sm:p-8">
+<body class="p-4 md:p-10">
 
-    <div id="loadingOverlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900 transition-opacity duration-700">
+    <div id="syncOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 transition-opacity duration-1000">
         <div class="text-center">
-            <i class="fa-solid fa-microchip fa-spin fa-3x text-yellow-500"></i>
-            <p class="mt-6 text-2xl font-black text-white uppercase tracking-[0.3em]">Syncing ASPD Database</p>
-            <p class="text-gray-500 text-sm mt-2">Connecting to Secure Google Cloud Relay...</p>
+            <div class="relative w-24 h-24 mx-auto mb-6">
+                <div class="absolute inset-0 border-4 border-yellow-500/20 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-yellow-500 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <h2 class="font-header text-2xl font-bold tracking-widest text-white">ESTABLISHING UPLINK</h2>
+            <p class="text-slate-500 mt-2 font-mono text-sm">Syncing with ASPD Cloud Database...</p>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto space-y-8">
-        <header class="flex flex-col md:flex-row justify-between items-center pb-6 border-b border-gray-700">
+    <div class="max-w-5xl mx-auto space-y-8">
+        <header class="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-slate-700 pb-8">
             <div>
-                <h1 class="text-4xl font-black text-white tracking-tighter uppercase">ASPD <span class="text-yellow-500">Payroll</span></h1>
-                <div class="flex items-center mt-2">
-                    <span id="statusDot" class="status-pulse offline"></span>
-                    <span id="statusText" class="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Relay Offline</span>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="h-3 w-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></span>
+                    <span class="font-mono text-[10px] tracking-[0.4em] text-slate-400 uppercase">System Active // v3.0 Cloud</span>
                 </div>
+                <h1 class="font-header text-5xl font-black text-white italic tracking-tighter">ASPD <span class="text-yellow-500">PAYROLL</span></h1>
             </div>
-            <div class="mt-4 md:mt-0 text-right">
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Department Fund Liability</p>
-                <p id="totalDebt" class="text-4xl font-black text-yellow-500">$0.00</p>
+            <div class="text-right">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Dept Liability</p>
+                <p id="totalDebt" class="text-5xl font-black text-white font-header">$0</p>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="space-y-6">
-                <div class="card border-t-4 border-yellow-500">
-                    <h3 class="text-lg font-bold text-white mb-4 uppercase flex items-center">
-                        <i class="fa-solid fa-file-invoice-dollar mr-2 text-yellow-500"></i> Payment Terminal
-                    </h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Select Personnel</label>
-                            <select id="empSelect" class="w-full text-sm outline-none focus:border-yellow-500">
-                                <option>Awaiting Data...</option>
-                            </select>
-                        </div>
-                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
-                            <p class="text-[10px] text-gray-500 uppercase font-bold">Current Accrual</p>
-                            <p id="calcPay" class="text-2xl font-black text-white">$0.00</p>
-                        </div>
-                        <button class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-lg font-black text-black transition uppercase text-sm tracking-widest">Authorize Payment</button>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="glass-card p-6">
+                    <h3 class="font-header text-sm font-bold text-yellow-500 mb-4 uppercase tracking-wider">New Hire Registration</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="newName" placeholder="Full Name" class="w-full rounded-lg p-3 text-sm outline-none">
+                        <select id="newRank" class="w-full rounded-lg p-3 text-sm outline-none">
+                            <option value="Sheriff">Sheriff</option>
+                            <option value="Captain">Captain</option>
+                            <option value="Sergeant">Sergeant</option>
+                            <option value="Deputy" selected>Deputy</option>
+                            <option value="Cadet">Cadet</option>
+                        </select>
+                        <button onclick="addEmployee()" class="btn-gold w-full py-3 rounded-lg text-sm">Deploy Personnel</button>
                     </div>
                 </div>
 
-                <div class="card bg-indigo-900/10 border-indigo-500/30">
-                    <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">System Metrics</h4>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-400">Active Roster:</span>
-                        <span id="activeCount" class="font-bold text-white">0</span>
+                <div class="glass-card p-6 border-t-4 border-yellow-500">
+                    <h3 class="font-header text-sm font-bold text-white mb-4 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-yellow-500"></i> Payment Terminal
+                    </h3>
+                    <div class="space-y-4">
+                        <select id="paySelect" onchange="calculatePreview()" class="w-full rounded-lg p-3 text-sm outline-none font-bold italic">
+                            <option value="">Select Employee...</option>
+                        </select>
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Calculated Accrual</p>
+                            <p id="previewAmount" class="text-3xl font-black text-white font-header">$0</p>
+                        </div>
+                        <button onclick="processPayment()" class="btn-gold w-full py-4 rounded-lg text-sm">Authorize Bank Transfer</button>
                     </div>
                 </div>
             </div>
 
-            <div class="card lg:col-span-2 border-l-4 border-indigo-600">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-white uppercase italic tracking-tight">Active Personnel Roster</h3>
-                    <i class="fa-solid fa-database text-gray-700"></i>
-                </div>
-                <div class="overflow-x-auto">
-                    <div class="payroll-row-desktop payroll-header mb-2">
-                        <div>#</div>
-                        <div>Name</div>
-                        <div>Designation</div>
-                        <div class="text-right">Accrued Amount</div>
-                        <div class="text-right">Status</div>
+            <div class="lg:col-span-8 space-y-6">
+                <div class="glass-card p-6 overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-header text-xl font-bold italic">Active Personnel Roster</h3>
+                        <span class="bg-slate-800 text-slate-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase" id="empCount">0 Active</span>
                     </div>
-                    <div id="rosterList" class="space-y-2">
+                    <div id="rosterContainer" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                         </div>
+                </div>
+
+                <div class="glass-card p-6 bg-slate-950/50 border-dashed border-slate-700">
+                    <h3 class="font-header text-[10px] font-bold text-slate-500 mb-4 uppercase tracking-[0.3em]">Transaction & Audit History</h3>
+                    <div id="auditLog" class="space-y-2 font-mono text-[10px] text-slate-400 uppercase">
+                        <div class="border-b border-slate-800 pb-2 italic">--- SYSTEM BOOTED: AWAITING TRANSACTIONS ---</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- DATA TRANSFER FROM ORIGINAL CODE ---
-        const WEEKLY_PAY_SCALE = {
+        // CONFIGURATION & PAY SCALES
+        const PAY_SCALE = {
             "Sheriff": 500000000, "Assistant Sheriff": 300000000,
             "Chief": 200000000, "Captain": 150000000,
             "Lieutenant": 100000000, "Sergeant": 75000000,
             "Deputy": 50000000, "Cadet": 25000000
         };
 
+        // Replace this with your exact Google Web App URL
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxSK39IpSOFzsb82-b_x3eowccR-4U84i8TxoPXFs154Et1kQRCVbSRBwxRFQllBdeddw/exec";
+        
+        let localRoster = [];
 
-        async function syncData() {
+        // INITIAL SYNC
+        async function fetchRoster() {
             try {
                 const response = await fetch(CLOUD_URL);
                 const data = await response.json();
-                if (data.employees) {
-                    updateInterface(data.employees);
-                    updateStatus(true);
-                }
-            } catch (err) {
-                updateStatus(false);
+                // Map the Google Sheet data into a usable object
+                localRoster = data.employees.map(emp => ({
+                    id: emp[4] || Date.now() + Math.random(),
+                    name: emp[1],
+                    rank: emp[2],
+                    lastPay: emp[0], // Using timestamp as last pay date
+                    totalPaid: parseFloat(emp[5]) || 0
+                }));
+                renderRoster();
+                document.getElementById('syncOverlay').style.opacity = '0';
+                setTimeout(() => document.getElementById('syncOverlay').style.display = 'none', 1000);
+            } catch (e) {
+                console.error("Sync Error", e);
             }
         }
 
-        function updateStatus(isOnline) {
-            const dot = document.getElementById('statusDot');
-            const txt = document.getElementById('statusText');
-            const loader = document.getElementById('loadingOverlay');
-
-            if (isOnline) {
-                dot.className = "status-pulse online";
-                txt.innerText = "Uplink Established // Cloud Sync Active";
-                txt.classList.replace('text-gray-500', 'text-green-500');
-                loader.classList.add('opacity-0');
-                setTimeout(() => loader.classList.add('hidden'), 700);
-            } else {
-                dot.className = "status-pulse offline";
-                txt.innerText = "Connection Error // Retrying Relay";
-                txt.classList.replace('text-green-500', 'text-red-500');
-            }
+        function calculateAccrued(rank, lastPayDate) {
+            const weeklyRate = PAY_SCALE[rank] || 0;
+            const lastDate = new Date(lastPayDate);
+            const now = new Date();
+            const diffInMs = now - lastDate;
+            const diffInWeeks = diffInMs / (1000 * 60 * 60 * 24 * 7);
+            return Math.floor(diffInWeeks * weeklyRate);
         }
 
-        function updateInterface(employees) {
-            const list = document.getElementById('rosterList');
-            const select = document.getElementById('empSelect');
-            let grandTotal = 0;
-            
-            list.innerHTML = "";
-            select.innerHTML = '<option disabled selected>-- Select Personnel --</option>';
+        function renderRoster() {
+            const container = document.getElementById('rosterContainer');
+            const select = document.getElementById('paySelect');
+            let totalLiability = 0;
 
-            employees.forEach((emp, index) => {
-                const name = emp[1] || "Unknown";
-                const rank = emp[2] || "Unassigned";
-                const payValue = parseFloat(emp[5]) || 0;
-                grandTotal += payValue;
+            container.innerHTML = "";
+            select.innerHTML = '<option value="">Select Employee...</option>';
 
-                list.innerHTML += `
-                    <div class="payroll-row-desktop bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-indigo-500/50 transition">
-                        <div class="text-gray-600 font-mono text-xs">${index + 1}</div>
-                        <div class="font-bold text-gray-200 uppercase text-sm">${name}</div>
-                        <div><span class="text-[10px] font-black text-indigo-400 border border-indigo-400/30 px-2 py-0.5 rounded uppercase">${rank}</span></div>
-                        <div class="text-right font-mono text-yellow-500 font-bold">$${payValue.toLocaleString()}</div>
-                        <div class="text-right"><i class="fa-solid fa-circle-check text-green-600 text-xs"></i></div>
+            localRoster.forEach((emp, index) => {
+                const accrued = calculateAccrued(emp.rank, emp.lastPay);
+                totalLiability += accrued;
+
+                // Roster Item UI
+                container.innerHTML += `
+                    <div class="bg-slate-800/40 border border-slate-700 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 hover:border-yellow-500/50 transition">
+                        <div class="flex items-center gap-4 w-full md:w-auto">
+                            <div class="h-10 w-10 bg-yellow-500 rounded-lg flex items-center justify-center text-black font-black font-header text-xs">${emp.name.charAt(0)}</div>
+                            <div>
+                                <h4 class="font-bold text-white uppercase text-sm tracking-tight">${emp.name}</h4>
+                                <div class="flex gap-2 items-center mt-1">
+                                    <span class="rank-badge status-tag">${emp.rank}</span>
+                                    <span class="text-[9px] text-slate-500 font-mono italic">Since: ${new Date(emp.lastPay).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                            <div class="text-right">
+                                <p class="text-[9px] font-bold text-slate-500 uppercase italic">Accrued Amount</p>
+                                <p class="text-xl font-header font-bold text-yellow-500">$${accrued.toLocaleString()}</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="changeRank(${index}, 'up')" class="bg-slate-700 hover:bg-green-600 w-8 h-8 rounded flex items-center justify-center transition"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+                                <button onclick="changeRank(${index}, 'down')" class="bg-slate-700 hover:bg-red-600 w-8 h-8 rounded flex items-center justify-center transition"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                            </div>
+                        </div>
                     </div>
                 `;
 
-                select.innerHTML += `<option value="${payValue}">${name}</option>`;
+                // Update Terminal Dropdown
+                select.innerHTML += `<option value="${index}">${emp.name} (${emp.rank})</option>`;
             });
 
-            document.getElementById('totalDebt').innerText = `$${grandTotal.toLocaleString()}`;
-            document.getElementById('activeCount').innerText = employees.length;
+            document.getElementById('totalDebt').innerText = `$${totalLiability.toLocaleString()}`;
+            document.getElementById('empCount').innerText = `${localRoster.length} Active Personnel`;
         }
 
-        document.getElementById('empSelect').addEventListener('change', function() {
-            document.getElementById('calcPay').innerText = `$${parseFloat(this.value).toLocaleString()}`;
-        });
+        function calculatePreview() {
+            const idx = document.getElementById('paySelect').value;
+            if(idx === "") {
+                document.getElementById('previewAmount').innerText = "$0";
+                return;
+            }
+            const emp = localRoster[idx];
+            const amount = calculateAccrued(emp.rank, emp.lastPay);
+            document.getElementById('previewAmount').innerText = `$${amount.toLocaleString()}`;
+        }
 
-        window.onload = () => {
-            syncData();
-            setInterval(syncData, 8000); 
-        };
+        function processPayment() {
+            const idx = document.getElementById('paySelect').value;
+            if(idx === "") return alert("Select an officer first.");
+            
+            const emp = localRoster[idx];
+            const amount = calculateAccrued(emp.rank, emp.lastPay);
+            
+            if(amount <= 0) return alert("No funds accrued yet.");
+
+            // Log to Audit
+            const log = document.getElementById('auditLog');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML = `<div class="bg-green-500/10 p-2 rounded border-l-2 border-green-500 mb-2">
+                <span class="text-green-500">[${time}]</span> PAID ${emp.name} $${amount.toLocaleString()} <br>
+                <span class="text-slate-600">ID: ${emp.id} // RANK: ${emp.rank}</span>
+            </div>` + log.innerHTML;
+
+            // Reset Pay Date
+            localRoster[idx].lastPay = new Date().toISOString();
+            renderRoster();
+            document.getElementById('paySelect').value = "";
+            document.getElementById('previewAmount').innerText = "$0";
+        }
+
+        function changeRank(idx, direction) {
+            const ranks = Object.keys(PAY_SCALE);
+            let currentIdx = ranks.indexOf(localRoster[idx].rank);
+            
+            if(direction === 'up' && currentIdx > 0) currentIdx--;
+            if(direction === 'down' && currentIdx < ranks.length - 1) currentIdx++;
+            
+            localRoster[idx].rank = ranks[currentIdx];
+            renderRoster();
+        }
+
+        function addEmployee() {
+            const name = document.getElementById('newName').value;
+            const rank = document.getElementById('newRank').value;
+            if(!name) return alert("Enter a name");
+
+            localRoster.push({
+                id: Date.now(),
+                name: name,
+                rank: rank,
+                lastPay: new Date().toISOString(),
+                totalPaid: 0
+            });
+
+            document.getElementById('newName').value = "";
+            renderRoster();
+        }
+
+        window.onload = fetchRoster;
     </script>
 </body>
 </html>
