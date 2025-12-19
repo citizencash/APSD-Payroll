@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASPD PAYROLL - AGGRESSIVE SYNC</title>
+    <title>ASPD PAYROLL - SYSTEM ACTIVE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #06090f; color: #f3f4f6; font-family: sans-serif; }
         .card { background-color: #161b22; border-radius: 12px; padding: 20px; border: 1px solid #30363d; }
-        .status-pulse { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .online { background-color: #238636; box-shadow: 0 0 10px #238636; }
-        .offline { background-color: #da3633; box-shadow: 0 0 10px #da3633; }
+        .status-pulse { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .online { background-color: #238636; box-shadow: 0 0 12px #238636; }
+        .offline { background-color: #da3633; box-shadow: 0 0 12px #da3633; }
     </style>
 </head>
 <body id="appBody" class="p-6">
     <div class="max-w-3xl mx-auto space-y-6">
         <div class="card flex justify-between items-center border-t-4 border-yellow-500">
             <div>
-                <h1 class="text-xl font-bold text-white tracking-tighter">ASPD PAYROLL <span class="text-yellow-500">v2.0</span></h1>
+                <h1 class="text-xl font-bold text-white tracking-tighter">ASPD PAYROLL <span class="text-yellow-500">v2.5</span></h1>
                 <div class="flex items-center mt-1">
                     <span id="statusDot" class="status-pulse offline"></span>
                     <span id="statusText" class="text-xs font-mono uppercase text-gray-400">Force Syncing...</span>
@@ -25,7 +25,7 @@
             </div>
             <div class="flex gap-2">
                 <input type="password" id="adminKey" placeholder="KEY" class="bg-gray-900 border border-gray-700 p-2 rounded text-white w-20 text-xs">
-                <button onclick="bruteForceUnlock()" class="bg-yellow-600 px-3 py-2 rounded font-bold text-xs text-black">BOOT</button>
+                <button onclick="bruteForceUnlock()" class="bg-yellow-600 px-3 py-2 rounded font-bold text-xs text-black uppercase">Boot</button>
             </div>
         </div>
 
@@ -37,34 +37,32 @@
         <div class="card">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="font-bold text-gray-300">Personnel Roster</h3>
-                <button onclick="toggleModal(true)" class="hidden" id="entryBtn" style="background:#238636; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:bold;">+ NEW ENTRY</button>
+                <button onclick="alert('Access Sheet to Edit')" class="hidden" id="entryBtn" style="background:#238636; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:bold;">+ NEW ENTRY</button>
             </div>
             <div id="rosterList" class="space-y-3"></div>
         </div>
     </div>
 
     <script>
-        const TARGET_URL = "https://script.google.com/macros/s/AKfycbxh_PQpMLv2NHxbjFlCanKdj_yMh1HdbbRs_tzw4sEGtUrSrEGTiZjVagIsdoRXvL3M0w/exec";
+        // YOUR NEW LIVE DEPLOYMENT URL
+        const TARGET_URL = "https://script.google.com/macros/s/AKfycbxSK39IpSOFzsb82-b_x3eowccR-4U84i8TxoPXFs154Et1kQRCVbSRBwxRFQllBdeddw/exec";
         const MASTER_KEY = "ASPD2025";
 
-        // AGGRESSIVE SYNC ENGINE
         async function startBruteForceSync() {
-            console.log("Attempting Brute Force Connection...");
             try {
-                // The '?nocache=' part forces a fresh connection every time
+                // Aggressive cache-busting to force connection
                 const response = await fetch(`${TARGET_URL}?nocache=${Date.now()}`);
-                if (!response.ok) throw new Error('Target Refused Connection');
-                
                 const data = await response.json();
-                updateVisuals(data.employees);
                 
-                document.getElementById('statusDot').className = "status-pulse online";
-                document.getElementById('statusText').innerText = "SYSTEM ACTIVE";
-                document.getElementById('statusText').classList.add('text-green-500');
+                if (data.employees) {
+                    updateVisuals(data.employees);
+                    document.getElementById('statusDot').className = "status-pulse online";
+                    document.getElementById('statusText').innerText = "SYSTEM ACTIVE";
+                    document.getElementById('statusText').classList.replace('text-gray-400', 'text-green-500');
+                }
             } catch (err) {
-                console.error("Sync Failed. Retrying in 5 seconds...");
-                document.getElementById('statusText').innerText = "RETRYING CONNECTION...";
-                setTimeout(startBruteForceSync, 5000); // Auto-retry every 5 seconds
+                document.getElementById('statusText').innerText = "RETRYING...";
+                setTimeout(startBruteForceSync, 3000); 
             }
         }
 
@@ -72,14 +70,15 @@
             const list = document.getElementById('rosterList');
             let grandTotal = 0;
             list.innerHTML = employees.map(emp => {
-                grandTotal += parseFloat(emp[5] || 0);
+                let amount = parseFloat(emp[5]) || 0;
+                grandTotal += amount;
                 return `
                 <div class="flex justify-between items-center bg-gray-900/50 p-4 rounded-lg border border-gray-800">
                     <div>
-                        <p class="font-bold text-gray-200">${emp[1]}</p>
-                        <p class="text-[10px] text-gray-500 uppercase">${emp[2]}</p>
+                        <p class="font-bold text-gray-200">${emp[1] || '---'}</p>
+                        <p class="text-[10px] text-gray-500 uppercase">${emp[2] || 'ROSTER'}</p>
                     </div>
-                    <p class="text-yellow-500 font-mono font-bold">$${parseFloat(emp[5] || 0).toLocaleString()}</p>
+                    <p class="text-yellow-500 font-mono font-bold">$${amount.toLocaleString()}</p>
                 </div>`;
             }).join('');
             document.getElementById('totalDebt').innerText = `$${grandTotal.toLocaleString()}`;
@@ -89,12 +88,9 @@
             if (document.getElementById('adminKey').value === MASTER_KEY) {
                 document.getElementById('entryBtn').classList.remove('hidden');
                 alert("ADMIN OVERRIDE SUCCESSFUL");
-            } else {
-                alert("ACCESS DENIED");
-            }
+            } else { alert("ACCESS DENIED"); }
         }
 
-        // Initialize on load
         window.onload = startBruteForceSync;
     </script>
 </body>
