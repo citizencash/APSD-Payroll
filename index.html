@@ -42,7 +42,7 @@
         </div>
         <div id="officerModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
             <div class="bg-gray-800 border border-gray-700 p-6 rounded-2xl w-full max-w-md">
-                <h2 id="modalTitle" class="text-xl font-bold mb-4 text-yellow-400">Update Records</h2>
+                <h2 id="modalTitle" class="text-xl font-bold mb-4 text-yellow-400">Update Record</h2>
                 <input type="hidden" id="editIndex">
                 <div class="space-y-4">
                     <input type="text" id="nodeName" placeholder="Name/Nickname">
@@ -57,15 +57,14 @@
         </div>
     </div>
     <script>
-        // PASTE YOUR GOOGLE URL BETWEEN THE QUOTES BELOW ON LINE 93
-        const SCRIPT_URL = "PASTE_YOUR_URL_HERE";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh_PQpMLv2NHxbjFlCanKdj_yMh1HdbbRs_tzw4sEGtUrSrEGTiZjVagIsdoRXvL3M0w/exec";
         const ADMIN_PASSWORD = "ASPD2025"; 
 
         let employees = [];
         function checkLock() {
             if (document.getElementById('adminKey').value === ADMIN_PASSWORD) {
                 document.getElementById('appBody').classList.add('unlocked');
-                alert("Access Granted");
+                alert("Admin Access Granted");
             } else { alert("Incorrect Key"); }
         }
         async function loadData() {
