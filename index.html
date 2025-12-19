@@ -3,95 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASPD PAYROLL - SYSTEM ACTIVE</title>
+    <title>ASPD LIVE PAYROLL SYSTEM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        body { background-color: #06090f; color: #f3f4f6; font-family: sans-serif; }
-        .card { background-color: #161b22; border-radius: 12px; padding: 20px; border: 1px solid #30363d; }
-        .status-pulse { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .online { background-color: #238636; box-shadow: 0 0 12px #238636; }
-        .offline { background-color: #da3633; box-shadow: 0 0 12px #da3633; }
+        body { font-family: 'Inter', sans-serif; background-color: #0d131f; color: #f3f4f6; }
+        .card { background-color: #1f2937; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); border-radius: 1rem; padding: 1.5rem; border: 1px solid #30363d; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); }
+        input, select { background-color: #374151; border: 1px solid #4b5563; color: white; padding: 0.75rem; border-radius: 0.5rem; }
+        .payroll-row-desktop { display: grid; grid-template-columns: 0.5fr 2fr 1.5fr 1.5fr 1fr; gap: 0.5rem; padding: 1rem; align-items: center; }
+        .payroll-header { font-weight: 700; text-transform: uppercase; font-size: 0.75rem; color: #9ca3af; border-bottom: 2px solid #374151; }
+        .status-pulse { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .online { background-color: #238636; box-shadow: 0 0 10px #238636; }
+        .offline { background-color: #da3633; box-shadow: 0 0 10px #da3633; }
     </style>
 </head>
-<body id="appBody" class="p-6">
-    <div class="max-w-3xl mx-auto space-y-6">
-        <div class="card flex justify-between items-center border-t-4 border-yellow-500">
+<body class="p-4 sm:p-8">
+
+    <div id="loadingOverlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900 transition-opacity duration-700">
+        <div class="text-center">
+            <i class="fa-solid fa-microchip fa-spin fa-3x text-yellow-500"></i>
+            <p class="mt-6 text-2xl font-black text-white uppercase tracking-[0.3em]">Syncing ASPD Database</p>
+            <p class="text-gray-500 text-sm mt-2">Connecting to Secure Google Cloud Relay...</p>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto space-y-8">
+        <header class="flex flex-col md:flex-row justify-between items-center pb-6 border-b border-gray-700">
             <div>
-                <h1 class="text-xl font-bold text-white tracking-tighter">ASPD PAYROLL <span class="text-yellow-500">v2.5</span></h1>
-                <div class="flex items-center mt-1">
+                <h1 class="text-4xl font-black text-white tracking-tighter uppercase">ASPD <span class="text-yellow-500">Payroll</span></h1>
+                <div class="flex items-center mt-2">
                     <span id="statusDot" class="status-pulse offline"></span>
-                    <span id="statusText" class="text-xs font-mono uppercase text-gray-400">Force Syncing...</span>
+                    <span id="statusText" class="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Relay Offline</span>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <input type="password" id="adminKey" placeholder="KEY" class="bg-gray-900 border border-gray-700 p-2 rounded text-white w-20 text-xs">
-                <button onclick="bruteForceUnlock()" class="bg-yellow-600 px-3 py-2 rounded font-bold text-xs text-black uppercase">Boot</button>
+            <div class="mt-4 md:mt-0 text-right">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Department Fund Liability</p>
+                <p id="totalDebt" class="text-4xl font-black text-yellow-500">$0.00</p>
             </div>
-        </div>
+        </header>
 
-        <div id="mainDisplay" class="card text-center">
-            <h3 class="text-gray-500 text-xs font-bold uppercase tracking-widest">Total Liability</h3>
-            <p id="totalDebt" class="text-5xl font-black text-white mt-2">$0.00</p>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="space-y-6">
+                <div class="card border-t-4 border-yellow-500">
+                    <h3 class="text-lg font-bold text-white mb-4 uppercase flex items-center">
+                        <i class="fa-solid fa-file-invoice-dollar mr-2 text-yellow-500"></i> Payment Terminal
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Select Personnel</label>
+                            <select id="empSelect" class="w-full text-sm outline-none focus:border-yellow-500">
+                                <option>Awaiting Data...</option>
+                            </select>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                            <p class="text-[10px] text-gray-500 uppercase font-bold">Current Accrual</p>
+                            <p id="calcPay" class="text-2xl font-black text-white">$0.00</p>
+                        </div>
+                        <button class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-lg font-black text-black transition uppercase text-sm tracking-widest">Authorize Payment</button>
+                    </div>
+                </div>
 
-        <div class="card">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-gray-300">Personnel Roster</h3>
-                <button onclick="alert('Access Sheet to Edit')" class="hidden" id="entryBtn" style="background:#238636; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:bold;">+ NEW ENTRY</button>
+                <div class="card bg-indigo-900/10 border-indigo-500/30">
+                    <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">System Metrics</h4>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Active Roster:</span>
+                        <span id="activeCount" class="font-bold text-white">0</span>
+                    </div>
+                </div>
             </div>
-            <div id="rosterList" class="space-y-3"></div>
+
+            <div class="card lg:col-span-2 border-l-4 border-indigo-600">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-white uppercase italic tracking-tight">Active Personnel Roster</h3>
+                    <i class="fa-solid fa-database text-gray-700"></i>
+                </div>
+                <div class="overflow-x-auto">
+                    <div class="payroll-row-desktop payroll-header mb-2">
+                        <div>#</div>
+                        <div>Name</div>
+                        <div>Designation</div>
+                        <div class="text-right">Accrued Amount</div>
+                        <div class="text-right">Status</div>
+                    </div>
+                    <div id="rosterList" class="space-y-2">
+                        </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // YOUR NEW LIVE DEPLOYMENT URL
-        const TARGET_URL = "https://script.google.com/macros/s/AKfycbxSK39IpSOFzsb82-b_x3eowccR-4U84i8TxoPXFs154Et1kQRCVbSRBwxRFQllBdeddw/exec";
-        const MASTER_KEY = "ASPD2025";
+        // --- DATA TRANSFER FROM ORIGINAL CODE ---
+        const WEEKLY_PAY_SCALE = {
+            "Sheriff": 500000000, "Assistant Sheriff": 300000000,
+            "Chief": 200000000, "Captain": 150000000,
+            "Lieutenant": 100000000, "Sergeant": 75000000,
+            "Deputy": 50000000, "Cadet": 25000000
+        };
 
-        async function startBruteForceSync() {
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxSK39IpSOFzsb82-b_x3eowccR-4U84i8TxoPXFs154Et1kQRCVbSRBwxRFQllBdeddw/exec";
+
+        async function syncData() {
             try {
-                // Aggressive cache-busting to force connection
-                const response = await fetch(`${TARGET_URL}?nocache=${Date.now()}`);
+                const response = await fetch(CLOUD_URL);
                 const data = await response.json();
-                
                 if (data.employees) {
-                    updateVisuals(data.employees);
-                    document.getElementById('statusDot').className = "status-pulse online";
-                    document.getElementById('statusText').innerText = "SYSTEM ACTIVE";
-                    document.getElementById('statusText').classList.replace('text-gray-400', 'text-green-500');
+                    updateInterface(data.employees);
+                    updateStatus(true);
                 }
             } catch (err) {
-                document.getElementById('statusText').innerText = "RETRYING...";
-                setTimeout(startBruteForceSync, 3000); 
+                updateStatus(false);
             }
         }
 
-        function updateVisuals(employees) {
+        function updateStatus(isOnline) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            const loader = document.getElementById('loadingOverlay');
+
+            if (isOnline) {
+                dot.className = "status-pulse online";
+                txt.innerText = "Uplink Established // Cloud Sync Active";
+                txt.classList.replace('text-gray-500', 'text-green-500');
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.classList.add('hidden'), 700);
+            } else {
+                dot.className = "status-pulse offline";
+                txt.innerText = "Connection Error // Retrying Relay";
+                txt.classList.replace('text-green-500', 'text-red-500');
+            }
+        }
+
+        function updateInterface(employees) {
             const list = document.getElementById('rosterList');
+            const select = document.getElementById('empSelect');
             let grandTotal = 0;
-            list.innerHTML = employees.map(emp => {
-                let amount = parseFloat(emp[5]) || 0;
-                grandTotal += amount;
-                return `
-                <div class="flex justify-between items-center bg-gray-900/50 p-4 rounded-lg border border-gray-800">
-                    <div>
-                        <p class="font-bold text-gray-200">${emp[1] || '---'}</p>
-                        <p class="text-[10px] text-gray-500 uppercase">${emp[2] || 'ROSTER'}</p>
+            
+            list.innerHTML = "";
+            select.innerHTML = '<option disabled selected>-- Select Personnel --</option>';
+
+            employees.forEach((emp, index) => {
+                const name = emp[1] || "Unknown";
+                const rank = emp[2] || "Unassigned";
+                const payValue = parseFloat(emp[5]) || 0;
+                grandTotal += payValue;
+
+                list.innerHTML += `
+                    <div class="payroll-row-desktop bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-indigo-500/50 transition">
+                        <div class="text-gray-600 font-mono text-xs">${index + 1}</div>
+                        <div class="font-bold text-gray-200 uppercase text-sm">${name}</div>
+                        <div><span class="text-[10px] font-black text-indigo-400 border border-indigo-400/30 px-2 py-0.5 rounded uppercase">${rank}</span></div>
+                        <div class="text-right font-mono text-yellow-500 font-bold">$${payValue.toLocaleString()}</div>
+                        <div class="text-right"><i class="fa-solid fa-circle-check text-green-600 text-xs"></i></div>
                     </div>
-                    <p class="text-yellow-500 font-mono font-bold">$${amount.toLocaleString()}</p>
-                </div>`;
-            }).join('');
+                `;
+
+                select.innerHTML += `<option value="${payValue}">${name}</option>`;
+            });
+
             document.getElementById('totalDebt').innerText = `$${grandTotal.toLocaleString()}`;
+            document.getElementById('activeCount').innerText = employees.length;
         }
 
-        function bruteForceUnlock() {
-            if (document.getElementById('adminKey').value === MASTER_KEY) {
-                document.getElementById('entryBtn').classList.remove('hidden');
-                alert("ADMIN OVERRIDE SUCCESSFUL");
-            } else { alert("ACCESS DENIED"); }
-        }
+        document.getElementById('empSelect').addEventListener('change', function() {
+            document.getElementById('calcPay').innerText = `$${parseFloat(this.value).toLocaleString()}`;
+        });
 
-        window.onload = startBruteForceSync;
+        window.onload = () => {
+            syncData();
+            setInterval(syncData, 8000); 
+        };
     </script>
 </body>
 </html>
