@@ -27,7 +27,6 @@
                 <button onclick="checkLock()" class="bg-indigo-600 px-4 py-2 rounded-lg font-bold text-sm">Unlock</button>
             </div>
         </header>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card h-fit border-l-4 border-yellow-500 text-center">
                 <h3 class="text-gray-400 text-xs font-bold uppercase">Dept. Liability</h3>
@@ -41,10 +40,23 @@
                 <div id="rosterList" class="space-y-3"></div>
             </div>
         </div>
+        <div id="officerModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-2xl w-full max-w-md">
+                <h2 id="modalTitle" class="text-xl font-bold mb-4 text-yellow-400">Update Record</h2>
+                <input type="hidden" id="editIndex">
+                <div class="space-y-4">
+                    <input type="text" id="nodeName" placeholder="Name/Nickname">
+                    <input type="text" id="nodeRank" placeholder="Rank">
+                    <input type="number" id="nodePay" placeholder="Weekly Pay">
+                    <div class="flex gap-2 mt-6">
+                        <button onclick="closeModal()" class="flex-1 bg-gray-700 py-3 rounded-xl font-bold">Cancel</button>
+                        <button onclick="saveOfficer()" class="flex-1 bg-indigo-600 py-3 rounded-xl font-bold">Sync to Cloud</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
     <script>
-        // PRE-LOADED URL FROM YOUR PREVIOUS MESSAGE
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh_PQpMLv2NHxbjFlCanKdj_yMh1HdbbRs_tzw4sEGtUrSrEGTiZjVagIsdoRXvL3M0w/exec";
         const ADMIN_PASSWORD = "ASPD2025"; 
 
@@ -71,9 +83,37 @@
                 total += parseFloat(emp.wkAccrual || 0);
                 return `<div class="flex justify-between items-center bg-gray-900/40 p-4 rounded-xl border border-gray-800">
                     <div><p class="font-bold text-white text-lg">${emp.name}</p><p class="text-xs text-gray-500 uppercase font-semibold">${emp.rank}</p></div>
-                    <div class="flex items-center gap-4"><p class="text-yellow-400 font-bold">$${parseFloat(emp.wkAccrual).toLocaleString()}</p></div></div>`;
+                    <div class="flex items-center gap-4"><p class="text-yellow-400 font-bold">$${parseFloat(emp.wkAccrual).toLocaleString()}</p>
+                    <button onclick="openModal(${index})" class="admin-only bg-gray-700 p-2 rounded hover:bg-gray-600"><i class="fa-solid fa-pen"></i></button></div></div>`;
             }).join('');
             document.getElementById('totalDebt').innerText = `$${total.toLocaleString()}`;
+        }
+        function openModal(index = null) {
+            if (index !== null) {
+                const emp = employees[index];
+                document.getElementById('modalTitle').innerText = "Rename Officer";
+                document.getElementById('nodeName').value = emp.name;
+                document.getElementById('nodeRank').value = emp.rank;
+                document.getElementById('nodePay').value = emp.wkBasic;
+                document.getElementById('editIndex').value = index;
+            } else {
+                document.getElementById('modalTitle').innerText = "New Entry";
+                document.getElementById('nodeName').value = ""; document.getElementById('nodeRank').value = ""; document.getElementById('nodePay').value = ""; document.getElementById('editIndex').value = "";
+            }
+            document.getElementById('officerModal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('officerModal').classList.add('hidden'); }
+        async function saveOfficer() {
+            const name = document.getElementById('nodeName').value;
+            const rank = document.getElementById('nodeRank').value;
+            const pay = document.getElementById('nodePay').value;
+            const idx = document.getElementById('editIndex').value;
+            if (idx === "") { employees.push({ id: Date.now(), name, rank, wkBasic: pay, wkAccrual: pay, date: "N/A" });
+            } else { employees[idx].name = name; employees[idx].rank = rank; employees[idx].wkBasic = pay; employees[idx].wkAccrual = pay; }
+            closeModal(); renderUI();
+            document.getElementById('statusText').innerText = "SYNCING...";
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ type: "SAVE_ALL", employees: employees, newLogs: [] }) });
+            document.getElementById('statusText').innerText = "✅ CLOUD ACTIVE";
         }
         window.onload = loadData;
     </script>
