@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APSD PAYROLL - COMPLETE LOCKDOWN</title>
+    <title>APSD PAYROLL - RESPONSIVE MAIN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -13,8 +13,8 @@
         .orange-glow { border: 2px solid #9a3412; box-shadow: 0 0 15px rgba(154, 52, 18, 0.2); }
         .modal-overlay { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(10px); z-index: 100; }
         
-        /* Disabled state styling for locked dropdowns */
-        select:disabled { opacity: 0.5; cursor: not-allowed; background-color: #0d1117 !important; }
+        select:disabled { opacity: 0.4; cursor: not-allowed; }
+        input:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -39,11 +39,11 @@
 
     <div id="loginGate" class="modal-overlay fixed inset-0 hidden flex items-center justify-center p-4">
         <div class="bg-[#0d1117] rounded-3xl border-t-4 border-yellow-500 p-8 w-full max-w-sm text-center">
-            <h2 class="text-xl font-bold uppercase italic mb-2">Authorization Required</h2>
-            <p class="text-[10px] text-gray-500 mb-6 font-bold uppercase italic">Master Code needed to unlock console</p>
+            <h2 class="text-xl font-bold uppercase italic mb-2 text-white">Authorization Required</h2>
+            <p class="text-[10px] text-gray-500 mb-6 font-bold uppercase italic">Enter master code to unlock system</p>
             <input type="password" id="gateKey" placeholder="****" maxlength="4" class="w-full bg-gray-900 p-4 rounded-xl text-center text-3xl font-bold mb-6 outline-none border border-gray-700 text-white">
             <div class="flex flex-col gap-3">
-                <button onclick="login()" class="w-full bg-yellow-600 py-4 rounded-xl font-black uppercase italic tracking-widest">Verify Access</button>
+                <button onclick="login()" class="w-full bg-yellow-600 py-4 rounded-xl font-black uppercase italic tracking-widest text-white">Verify Admin</button>
                 <button onclick="closeLogin()" class="w-full text-gray-500 text-[10px] font-bold uppercase mt-2">Close (View Only)</button>
             </div>
         </div>
@@ -62,46 +62,49 @@
         </div>
     </div>
 
-    <div class="max-w-md mx-auto space-y-6">
+    <div class="max-w-md lg:max-w-5xl mx-auto space-y-6">
         <header class="text-center py-4 relative">
-            <div id="statusToggle" onclick="handleHeaderAction()" class="absolute top-0 right-0 border border-gray-700 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-black/40">
+            <div id="statusToggle" onclick="handleHeaderAction()" class="absolute top-0 right-0 border border-gray-700 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-black/40 text-gray-500">
                 <span id="statusText"><i class="fa-solid fa-lock mr-1"></i> Locked</span>
             </div>
-            <h1 class="text-2xl font-black italic text-[#eab308] uppercase tracking-tight">APSD PAYROLL TRACKER</h1>
+            <h1 class="text-2xl lg:text-4xl font-black italic text-[#eab308] uppercase tracking-tight">APSD PAYROLL TRACKER</h1>
             <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">● Uplink Active // Cloud Sync</p>
         </header>
 
-        <div class="glow-card orange-glow text-center">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Department Fund (Resources)</p>
-            <p id="totalFund" class="text-4xl font-black text-yellow-500 mt-1">$0</p>
-        </div>
-
-        <button onclick="adminAction(() => factoryReset())" class="w-full bg-red-950/20 border border-red-900/50 text-red-500 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest italic">
-            <i class="fa-solid fa-skull mr-2"></i> Secure Factory Reset
-        </button>
-
-        <div class="glow-card orange-glow">
-            <h3 class="font-bold text-lg mb-4 uppercase italic flex items-center">
-                <i class="fa-solid fa-sack-dollar text-orange-500 mr-2"></i> Log Payment Status
-            </h3>
-            <div class="space-y-4">
-                <select id="personnelSelect" onchange="updateTerminal()" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold">
-                    <option value="">-- Select Employee --</option>
-                </select>
-                <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
-                    <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Total Monthly Payout (Expected)</label>
-                    <p id="accrualAmount" class="text-3xl font-bold mb-1">0.00</p>
-                    <p id="accrualDetail" class="text-[10px] text-gray-500 italic">4-Week Projection + Bonuses</p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-6">
+                <div class="glow-card orange-glow text-center h-full flex flex-col justify-center">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Department Fund (Resources)</p>
+                    <p id="totalFund" class="text-4xl lg:text-6xl font-black text-yellow-500 mt-1">$0</p>
                 </div>
-                <div class="flex items-center justify-between p-2">
-                    <span class="text-green-500 font-bold text-sm">Full Monthly Amount Paid</span>
-                    <label class="switch"><input type="checkbox" id="fullPayToggle" onchange="adminAction(() => toggleFullPay(), 'fullPayToggle')"><span class="slider"></span></label>
-                </div>
-                <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-xl">
-                <button onclick="adminAction(() => processPayment())" class="w-full bg-orange-800 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
-                    <span>Log Transaction</span>
-                    <span class="text-[8px] opacity-70 mt-1 font-normal uppercase">Unpaid amounts reroll to Department Fund.</span>
+                <button onclick="adminAction(() => factoryReset())" class="w-full bg-red-950/20 border border-red-900/50 text-red-500 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest italic">
+                    <i class="fa-solid fa-skull mr-2"></i> Secure Factory Reset
                 </button>
+            </div>
+
+            <div class="glow-card orange-glow">
+                <h3 class="font-bold text-lg mb-4 uppercase italic flex items-center">
+                    <i class="fa-solid fa-sack-dollar text-orange-500 mr-2"></i> Log Payment Status
+                </h3>
+                <div class="space-y-4">
+                    <select id="personnelSelect" onchange="updateTerminal()" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold">
+                        <option value="">-- Select Employee --</option>
+                    </select>
+                    <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
+                        <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Total Monthly Payout (Expected)</label>
+                        <p id="accrualAmount" class="text-3xl font-bold mb-1">0.00</p>
+                        <p id="accrualDetail" class="text-[10px] text-gray-500 italic">4-Week Projection + Bonuses</p>
+                    </div>
+                    <div class="flex items-center justify-between p-2">
+                        <span class="text-green-500 font-bold text-sm">Full Monthly Amount Paid</span>
+                        <label class="switch"><input type="checkbox" id="fullPayToggle" onchange="adminAction(() => toggleFullPay(), 'fullPayToggle')"><span class="slider"></span></label>
+                    </div>
+                    <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-xl">
+                    <button onclick="adminAction(() => processPayment())" class="w-full bg-orange-800 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
+                        <span>Log Transaction</span>
+                        <span class="text-[8px] opacity-70 mt-1 font-normal uppercase">Unpaid amounts reroll to Department Fund.</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -109,11 +112,12 @@
             <h2 class="text-xl font-black italic uppercase">Active Roster</h2>
             <button onclick="adminAction(() => document.getElementById('addModal').classList.remove('hidden'))" class="bg-purple-700 px-4 py-2 rounded-xl text-xs font-bold uppercase">+ Add Personnel</button>
         </div>
-        <div id="rosterContainer" class="space-y-4"></div>
+        
+        <div id="rosterContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
         <div class="mt-8 mb-10 glow-card border border-gray-800">
-            <h3 class="text-xl font-black uppercase mb-6">Transaction & Audit History</h3>
-            <div id="auditLog"></div>
+            <h3 class="text-xl font-black uppercase mb-6 text-center lg:text-left">Transaction & Audit History</h3>
+            <div id="auditLog" class="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-10"></div>
         </div>
     </div>
 
@@ -156,11 +160,7 @@
             document.getElementById('gateKey').value = "";
         }
 
-        function logout() {
-            sessionStorage.removeItem('ASPD_Session');
-            isAdmin = false;
-            location.reload();
-        }
+        function logout() { sessionStorage.removeItem('ASPD_Session'); isAdmin = false; location.reload(); }
 
         function updateTerminal() {
             const id = document.getElementById('personnelSelect').value;
@@ -230,7 +230,7 @@
             }
         }
 
-        function factoryReset() { if(confirm("DELETE ENTIRE SYSTEM DATA?")) { localStorage.clear(); location.reload(); } }
+        function factoryReset() { if(confirm("DELETE ALL SYSTEM DATA?")) { localStorage.clear(); location.reload(); } }
         function save() { localStorage.setItem('ASPD_Employees', JSON.stringify(employees)); localStorage.setItem('ASPD_History', JSON.stringify(history)); render(); }
 
         function render() {
@@ -240,7 +240,6 @@
                 "absolute top-0 right-0 border border-red-500 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-red-900/20 text-red-500" : 
                 "absolute top-0 right-0 border border-gray-700 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-black/40 text-gray-500";
 
-            // LOGIC: Disable interaction elements if not admin
             document.getElementById('personnelSelect').disabled = !isAdmin;
             document.getElementById('actualPaidInput').disabled = !isAdmin;
 
