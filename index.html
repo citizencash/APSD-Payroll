@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APSD PAYROLL - RESPONSIVE MAIN</title>
+    <title>APSD PAYROLL - FULL WIDTH MAIN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -62,62 +62,66 @@
         </div>
     </div>
 
-    <div class="max-w-md lg:max-w-5xl mx-auto space-y-6">
+    <div class="w-full max-w-[1920px] mx-auto space-y-6 lg:px-8">
         <header class="text-center py-4 relative">
             <div id="statusToggle" onclick="handleHeaderAction()" class="absolute top-0 right-0 border border-gray-700 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-black/40 text-gray-500">
                 <span id="statusText"><i class="fa-solid fa-lock mr-1"></i> Locked</span>
             </div>
-            <h1 class="text-2xl lg:text-4xl font-black italic text-[#eab308] uppercase tracking-tight">APSD PAYROLL TRACKER</h1>
+            <h1 class="text-2xl lg:text-5xl font-black italic text-[#eab308] uppercase tracking-tight">APSD PAYROLL TRACKER</h1>
             <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">● Uplink Active // Cloud Sync</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="space-y-6">
-                <div class="glow-card orange-glow text-center h-full flex flex-col justify-center">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Department Fund (Resources)</p>
-                    <p id="totalFund" class="text-4xl lg:text-6xl font-black text-yellow-500 mt-1">$0</p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glow-card orange-glow text-center h-full flex flex-col justify-center py-10">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Department Fund</p>
+                    <p id="totalFund" class="text-5xl lg:text-7xl font-black text-yellow-500 mt-1">$0</p>
                 </div>
                 <button onclick="adminAction(() => factoryReset())" class="w-full bg-red-950/20 border border-red-900/50 text-red-500 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest italic">
                     <i class="fa-solid fa-skull mr-2"></i> Secure Factory Reset
                 </button>
             </div>
 
-            <div class="glow-card orange-glow">
+            <div class="lg:col-span-2 glow-card orange-glow">
                 <h3 class="font-bold text-lg mb-4 uppercase italic flex items-center">
                     <i class="fa-solid fa-sack-dollar text-orange-500 mr-2"></i> Log Payment Status
                 </h3>
-                <div class="space-y-4">
-                    <select id="personnelSelect" onchange="updateTerminal()" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold">
-                        <option value="">-- Select Employee --</option>
-                    </select>
-                    <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
-                        <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Total Monthly Payout (Expected)</label>
-                        <p id="accrualAmount" class="text-3xl font-bold mb-1">0.00</p>
-                        <p id="accrualDetail" class="text-[10px] text-gray-500 italic">4-Week Projection + Bonuses</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-4">
+                        <select id="personnelSelect" onchange="updateTerminal()" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold">
+                            <option value="">-- Select Employee --</option>
+                        </select>
+                        <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
+                            <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Expected Payout</label>
+                            <p id="accrualAmount" class="text-3xl font-bold mb-1">0.00</p>
+                            <p id="accrualDetail" class="text-[10px] text-gray-500 italic">Projection + Bonuses</p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between p-2">
-                        <span class="text-green-500 font-bold text-sm">Full Monthly Amount Paid</span>
-                        <label class="switch"><input type="checkbox" id="fullPayToggle" onchange="adminAction(() => toggleFullPay(), 'fullPayToggle')"><span class="slider"></span></label>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-2">
+                            <span class="text-green-500 font-bold text-sm">Full Monthly Amount Paid</span>
+                            <label class="switch"><input type="checkbox" id="fullPayToggle" onchange="adminAction(() => toggleFullPay(), 'fullPayToggle')"><span class="slider"></span></label>
+                        </div>
+                        <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-3xl">
                     </div>
-                    <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-xl">
-                    <button onclick="adminAction(() => processPayment())" class="w-full bg-orange-800 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
-                        <span>Log Transaction</span>
-                        <span class="text-[8px] opacity-70 mt-1 font-normal uppercase">Unpaid amounts reroll to Department Fund.</span>
-                    </button>
                 </div>
+                <button onclick="adminAction(() => processPayment())" class="w-full bg-orange-800 mt-4 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
+                    <span>Log Transaction</span>
+                    <span class="text-[8px] opacity-70 mt-1 font-normal uppercase">Unpaid amounts reroll to Department Fund.</span>
+                </button>
             </div>
         </div>
 
         <div class="flex justify-between items-center px-1">
-            <h2 class="text-xl font-black italic uppercase">Active Roster</h2>
-            <button onclick="adminAction(() => document.getElementById('addModal').classList.remove('hidden'))" class="bg-purple-700 px-4 py-2 rounded-xl text-xs font-bold uppercase">+ Add Personnel</button>
+            <h2 class="text-2xl font-black italic uppercase">Active Roster</h2>
+            <button onclick="adminAction(() => document.getElementById('addModal').classList.remove('hidden'))" class="bg-purple-700 px-6 py-3 rounded-xl text-xs font-bold uppercase">+ Add Personnel</button>
         </div>
         
-        <div id="rosterContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        <div id="rosterContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
 
         <div class="mt-8 mb-10 glow-card border border-gray-800">
-            <h3 class="text-xl font-black uppercase mb-6 text-center lg:text-left">Transaction & Audit History</h3>
-            <div id="auditLog" class="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-10"></div>
+            <h3 class="text-xl font-black uppercase mb-6">Transaction & Audit History</h3>
+            <div id="auditLog" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8"></div>
         </div>
     </div>
 
