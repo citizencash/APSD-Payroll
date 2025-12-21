@@ -3,290 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APSD PAYROLL - FULL WIDTH MAIN</title>
+    <title>APSD | CRIMINAL DATABASE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        body { background-color: #05070a; color: #ffffff; font-family: sans-serif; overflow-x: hidden; }
-        .glow-card { background: #0d1117; border-radius: 1.5rem; padding: 1.5rem; position: relative; }
-        .purple-glow { border: 2px solid #6d28d9; box-shadow: 0 0 15px rgba(109, 40, 217, 0.2); }
-        .orange-glow { border: 2px solid #9a3412; box-shadow: 0 0 15px rgba(154, 52, 18, 0.2); }
-        .modal-overlay { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(10px); z-index: 100; }
-        
-        select:disabled { opacity: 0.4; cursor: not-allowed; }
-        input:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #161b22; transition: .4s; border-radius: 34px; border: 1px solid #30363d; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: #444; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #064e3b; border-color: #22c55e; }
-        input:checked + .slider:before { transform: translateX(24px); background-color: #22c55e; }
-
-        .rank-container { background: #6d28d9; border-radius: 0.75rem; position: relative; height: 44px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
-        .rank-container select { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
-        .rank-display { font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
-
-        .status-btn { background: #1e3a8a; color: #ffffff; border-radius: 0.75rem; padding: 8px; width: 100%; font-size: 10px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .reward-btn { background: #064e3b; color: #ffffff; border-radius: 0.75rem; padding: 8px; width: 100%; font-size: 10px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
-        
-        .audit-entry { border-bottom: 1px solid #161b22; padding: 20px 0; display: flex; justify-content: space-between; }
-        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #064e3b; color: #fff; padding: 14px 24px; border-radius: 8px; font-weight: bold; font-size: 12px; border-left: 5px solid #22c55e; z-index: 500; display: none; width: 90%; max-width: 400px; text-align: center; }
+        body { background-color: #0a0a0a; color: #d1d1d1; font-family: 'Segoe UI', sans-serif; }
+        .nexus-header { color: #ff9d00; font-style: italic; font-weight: 900; }
+        .panel { background: #161616; border: 1px solid #2a2a2a; border-radius: 12px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        input, select, textarea { background: #222 !important; border: 1px solid #333 !important; color: white !important; padding: 12px; border-radius: 6px; width: 100%; margin-bottom: 12px; font-size: 14px; }
+        .btn-upload { background: #ff9d00; color: #000; font-weight: 900; width: 100%; padding: 15px; border-radius: 6px; text-transform: uppercase; cursor: pointer; border: none; }
+        .suspect-card { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 15px; border-left: 4px solid #ff9d00; position: relative; }
+        .sus-img { width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; border: 1px solid #333; background: #000; }
+        .mini-img { width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #444; }
+        .btn-archive { width: 78%; background: #062006; border: 1px solid #00ff00; color: #00ff00; font-size: 10px; font-weight: 900; padding: 10px; border-radius: 4px; text-transform: uppercase; cursor: pointer; }
+        .btn-scrub { width: 18%; background: #200606; border: 1px solid #ff0000; color: #ff0000; font-size: 10px; padding: 10px; border-radius: 4px; cursor: pointer; text-align: center; }
+        .btn-release { border: 1px solid #ff9d00; color: #ff9d00; font-size: 8px; font-weight: 900; padding: 6px 10px; border-radius: 3px; cursor: pointer; background: transparent; }
+        .btn-release:hover { background: #ff9d00; color: #000; }
+        .archive-card { background: #111; border: 1px solid #222; opacity: 0.8; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 min-h-screen">
-    <div id="toast"></div>
+<body onload="fetchAllData()">
 
-    <div id="loginGate" class="modal-overlay fixed inset-0 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0d1117] rounded-3xl border-t-4 border-yellow-500 p-8 w-full max-w-sm text-center">
-            <h2 class="text-xl font-bold uppercase italic mb-2 text-white">Authorization Required</h2>
-            <p class="text-[10px] text-gray-500 mb-6 font-bold uppercase italic">Enter master code to unlock system</p>
-            <input type="password" id="gateKey" placeholder="****" maxlength="4" class="w-full bg-gray-900 p-4 rounded-xl text-center text-3xl font-bold mb-6 outline-none border border-gray-700 text-white">
-            <div class="flex flex-col gap-3">
-                <button onclick="login()" class="w-full bg-yellow-600 py-4 rounded-xl font-black uppercase italic tracking-widest text-white">Verify Admin</button>
-                <button onclick="closeLogin()" class="w-full text-gray-500 text-[10px] font-bold uppercase mt-2">Close (View Only)</button>
-            </div>
+<div class="max-w-[1400px] mx-auto p-4 md:p-10">
+    <header class="mb-10 border-b border-gray-800 pb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-5xl nexus-header uppercase italic">APSD CRIMINAL DATABASE</h1>
+            <p class="text-[11px] font-black tracking-[0.5em] text-gray-500 uppercase mt-2">NEXUS INTELLIGENCE DIVISION // SECTOR 7</p>
+        </div>
+        <span class="text-green-500 text-xs font-black animate-pulse flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved"></i> MASTER_UPLINK_LOCKED
+        </span>
+    </header>
+
+    <div class="grid lg:grid-cols-12 gap-10">
+        <div class="lg:col-span-4 panel h-fit">
+            <h2 class="text-xs font-black mb-6 uppercase text-orange-500 italic tracking-widest">Entry_Protocol</h2>
+            <input type="text" id="susName" placeholder="Suspect Identity (Required)">
+            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="document.getElementById('fileName').innerText = 'PHOTO_LOCKED: ' + this.files[0].name">
+            <button type="button" onclick="document.getElementById('fileInput').click()" class="bg-gray-900 p-5 w-full rounded border border-dashed border-gray-700 text-[11px] font-black mb-3 text-gray-500 hover:border-orange-500">
+                ATTACH VISUAL DATA (REQUIRED)
+            </button>
+            <p id="fileName" class="text-[10px] text-orange-500 mb-4 italic font-bold text-center"></p>
+            <textarea id="offenses" rows="3" placeholder="Nature of Crimes..."></textarea>
+            <button onclick="handleNexusUplink()" id="submitBtn" class="btn-upload">Sync to Nexus</button>
+        </div>
+
+        <div class="lg:col-span-8 panel">
+            <h2 class="text-xs font-black uppercase italic mb-6 text-gray-500 tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs text-red-600"></i> Active_Nexus_Files
+            </h2>
+            <div id="suspectList" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[450px] overflow-y-auto pr-2 custom-scroll mb-10"></div>
+
+            <h2 class="text-xs font-black uppercase italic mb-6 text-green-600 border-t border-gray-800 pt-10 tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-vault"></i> Apprehended_Vault_Archive
+            </h2>
+            <div id="archiveList" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[350px] overflow-y-auto custom-scroll"></div>
         </div>
     </div>
+</div>
 
-    <div id="addModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0d1117] rounded-3xl p-6 w-full max-w-sm border border-purple-500">
-            <h2 class="text-xl font-bold uppercase italic mb-4 text-center">Register Officer</h2>
-            <input type="text" id="newName" placeholder="Name" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-3 text-white outline-none">
-            <select id="newRank" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-3 text-white font-bold outline-none">
-                <option value="Sheriff">Sheriff</option><option value="Assistant Sheriff">Assistant Sheriff</option><option value="Chief">Chief</option><option value="Captain">Captain</option><option value="Lieutenant">Lieutenant</option><option value="Sergeant">Sergeant</option><option value="Deputy">Deputy</option><option value="Cadet">Cadet</option>
-            </select>
-            <input type="date" id="newDate" class="w-full bg-[#161b22] border border-gray-700 p-3 rounded-xl mb-4 text-white outline-none">
-            <button onclick="addEmployee()" class="w-full bg-purple-700 py-3 rounded-xl font-bold uppercase">Register</button>
-            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="w-full mt-2 text-gray-500 text-xs font-bold uppercase">Cancel</button>
-        </div>
-    </div>
+<script>
+    const CLOUD_NAME = 'dekkrffkl';
+    const UPLOAD_PRESET = 'jseg7act';
+    const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbzQ7bGrSXMVHbaJWknMvbzq79azOzwIBNx_E0aDIt4jei0OLHYlBL8N-prY20M0clmEag/exec';
 
-    <div class="w-full max-w-[1920px] mx-auto space-y-6 lg:px-8">
-        <header class="text-center py-4 relative">
-            <div id="statusToggle" onclick="handleHeaderAction()" class="absolute top-0 right-0 border border-gray-700 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-black/40 text-gray-500">
-                <span id="statusText"><i class="fa-solid fa-lock mr-1"></i> Locked</span>
-            </div>
-            <h1 class="text-2xl lg:text-5xl font-black italic text-[#eab308] uppercase tracking-tight">APSD PAYROLL TRACKER</h1>
-            <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">● Uplink Active // Cloud Sync</p>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-1 space-y-6">
-                <div class="glow-card orange-glow text-center h-full flex flex-col justify-center py-10">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Department Fund</p>
-                    <p id="totalFund" class="text-5xl lg:text-7xl font-black text-yellow-500 mt-1">$0</p>
-                </div>
-                <button onclick="adminAction(() => factoryReset())" class="w-full bg-red-950/20 border border-red-900/50 text-red-500 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest italic">
-                    <i class="fa-solid fa-skull mr-2"></i> Secure Factory Reset
-                </button>
-            </div>
-
-            <div class="lg:col-span-2 glow-card orange-glow">
-                <h3 class="font-bold text-lg mb-4 uppercase italic flex items-center">
-                    <i class="fa-solid fa-sack-dollar text-orange-500 mr-2"></i> Log Payment Status
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-4">
-                        <select id="personnelSelect" onchange="updateTerminal()" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold">
-                            <option value="">-- Select Employee --</option>
-                        </select>
-                        <div class="bg-black/40 p-4 rounded-xl border border-gray-800">
-                            <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Expected Payout</label>
-                            <p id="accrualAmount" class="text-3xl font-bold mb-1">0.00</p>
-                            <p id="accrualDetail" class="text-[10px] text-gray-500 italic">Projection + Bonuses</p>
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between p-2">
-                            <span class="text-green-500 font-bold text-sm">Full Monthly Amount Paid</span>
-                            <label class="switch"><input type="checkbox" id="fullPayToggle" onchange="adminAction(() => toggleFullPay(), 'fullPayToggle')"><span class="slider"></span></label>
-                        </div>
-                        <input type="text" id="actualPaidInput" value="0.00" class="w-full bg-[#161b22] border border-[#30363d] p-4 rounded-xl text-white outline-none font-bold text-3xl">
-                    </div>
-                </div>
-                <button onclick="adminAction(() => processPayment())" class="w-full bg-orange-800 mt-4 py-4 rounded-xl font-black uppercase italic tracking-widest flex flex-col items-center">
-                    <span>Log Transaction</span>
-                    <span class="text-[8px] opacity-70 mt-1 font-normal uppercase">Unpaid amounts reroll to Department Fund.</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center px-1">
-            <h2 class="text-2xl font-black italic uppercase">Active Roster</h2>
-            <button onclick="adminAction(() => document.getElementById('addModal').classList.remove('hidden'))" class="bg-purple-700 px-6 py-3 rounded-xl text-xs font-bold uppercase">+ Add Personnel</button>
-        </div>
+    async function handleNexusUplink() {
+        const file = document.getElementById('fileInput').files[0];
+        const name = document.getElementById('susName').value;
+        if(!name || !file) return alert("ACCESS DENIED: NAME AND PHOTO ARE MANDATORY.");
         
-        <div id="rosterContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "UPLOADING DATA...";
+        btn.disabled = true;
 
-        <div class="mt-8 mb-10 glow-card border border-gray-800">
-            <h3 class="text-xl font-black uppercase mb-6">Transaction & Audit History</h3>
-            <div id="auditLog" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8"></div>
-        </div>
-    </div>
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+        const imgData = await res.json();
 
-    <script>
-        const MASTER_CODE = "5622";
-        const RANKS = { "Sheriff": 500000000, "Assistant Sheriff": 300000000, "Chief": 200000000, "Captain": 150000000, "Lieutenant": 100000000, "Sergeant": 75000000, "Deputy": 50000000, "Cadet": 25000000 };
+        const params = new URLSearchParams({ name: name, img: imgData.secure_url, offenses: document.getElementById('offenses').value });
+        await fetch(GOOGLE_URL, { method: 'POST', mode: 'no-cors', body: params });
+        location.reload();
+    }
 
-        let employees = JSON.parse(localStorage.getItem('ASPD_Employees')) || [];
-        let history = JSON.parse(localStorage.getItem('ASPD_History')) || [];
-        let isAdmin = sessionStorage.getItem('ASPD_Session') === 'active';
+    async function moveToVault(name) {
+        if (!confirm("MOVE " + name + " TO APPREHENDED VAULT?")) return;
+        await fetch(GOOGLE_URL + "?action=archive&name=" + encodeURIComponent(name));
+        setTimeout(() => { location.reload(); }, 1500);
+    }
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
-
-        function adminAction(callback, toggleId = null) {
-            if (isAdmin) { callback(); } else { 
-                if(toggleId) document.getElementById(toggleId).checked = !document.getElementById(toggleId).checked;
-                showToast("ACCESS DENIED: VIEW ONLY MODE"); 
-            }
-        }
-
-        function handleHeaderAction() {
-            if (isAdmin) { logout(); } else { openLogin(); }
-        }
-
-        function openLogin() { document.getElementById('loginGate').classList.remove('hidden'); document.getElementById('gateKey').focus(); }
-        function closeLogin() { document.getElementById('loginGate').classList.add('hidden'); }
+    async function releaseCriminal(name) {
+        if (!confirm("AUTHORIZE RELEASE OF " + name + "? FILE WILL BE MOVED TO RELEASED LOGS.")) return;
+        const response = await fetch(GOOGLE_URL + "?action=release&name=" + encodeURIComponent(name));
+        const result = await response.text();
         
-        function login() {
-            if (document.getElementById('gateKey').value === MASTER_CODE) {
-                sessionStorage.setItem('ASPD_Session', 'active');
-                isAdmin = true;
-                closeLogin();
-                render();
-                showToast("ADMIN CONSOLE UNLOCKED");
-            } else { alert("ACCESS DENIED"); }
-            document.getElementById('gateKey').value = "";
+        if (result === "RELEASED") {
+            setTimeout(() => { location.reload(); }, 1500);
+        } else {
+            alert("SYSTEM ERROR: " + result);
         }
+    }
 
-        function logout() { sessionStorage.removeItem('ASPD_Session'); isAdmin = false; location.reload(); }
+    async function scrubFile(name) {
+        if (!confirm("SCRUB " + name + " PERMANENTLY? NO AUDIT TRAIL WILL REMAIN.")) return;
+        await fetch(GOOGLE_URL + "?action=delete&name=" + encodeURIComponent(name));
+        setTimeout(() => { location.reload(); }, 1500);
+    }
 
-        function updateTerminal() {
-            const id = document.getElementById('personnelSelect').value;
-            if(!id) return;
-            const emp = employees.find(e => e.id == id);
-            const monthlyBase = RANKS[emp.rank] * 4;
-            const totalMonthlyDue = monthlyBase + (emp.bonusPool || 0);
-            document.getElementById('accrualAmount').innerText = totalMonthlyDue.toLocaleString() + ".00";
-            document.getElementById('accrualDetail').innerText = `Monthly Projection: ${monthlyBase.toLocaleString()} | Bonus Balance: ${(emp.bonusPool || 0).toLocaleString()}`;
-        }
-
-        function toggleFullPay() {
-            document.getElementById('actualPaidInput').value = document.getElementById('fullPayToggle').checked ? document.getElementById('accrualAmount').innerText : "0.00";
-        }
-
-        function processPayment() {
-            const id = document.getElementById('personnelSelect').value;
-            if(!id) return;
-            const emp = employees.find(e => e.id == id);
-            const expected = parseFloat(document.getElementById('accrualAmount').innerText.replace(/,/g, ''));
-            const actual = parseFloat(document.getElementById('actualPaidInput').value.replace(/,/g, '')) || 0;
-            const rerollAmount = expected - actual;
-            history.unshift({ type: 'PAYROLL_LOG', name: emp.name, rank: emp.rank, amount: rerollAmount, paid: actual, timestamp: new Date().toLocaleDateString() });
-            emp.lastPay = new Date().toISOString().split('T')[0];
-            emp.bonusPool = 0; 
-            document.getElementById('fullPayToggle').checked = false;
-            document.getElementById('actualPaidInput').value = "0.00";
-            save();
-            showToast("Payroll Processed");
-        }
-
-        function addEmployee() {
-            const name = document.getElementById('newName').value;
-            const rank = document.getElementById('newRank').value;
-            const date = document.getElementById('newDate').value;
-            if(!name || !date) return;
-            employees.push({ id: Date.now().toString().slice(-4), name, rank, lastPay: date, bonusPool: 0 });
-            history.unshift({ type: 'NEW HIRE', name, rank, amount: 0, timestamp: new Date().toLocaleDateString() });
-            document.getElementById('addModal').classList.add('hidden');
-            save();
-        }
-
-        function addBonus(id) {
-            const emp = employees.find(e => e.id == id);
-            const amount = prompt(`Add Reward for ${emp.name}:`);
-            if (amount && !isNaN(amount)) {
-                emp.bonusPool = (emp.bonusPool || 0) + parseFloat(amount);
-                history.unshift({ type: 'BONUS_PAY', name: emp.name, rank: emp.rank, amount: 0, paid: parseFloat(amount), timestamp: new Date().toLocaleDateString() });
-                save();
-            }
-        }
-
-        function updateRank(id, newRank) {
-            const emp = employees.find(e => e.id == id);
-            const oldRank = emp.rank;
-            emp.rank = newRank;
-            history.unshift({ type: 'RANK_UPDATE', name: emp.name, oldRank, rank: newRank, timestamp: new Date().toLocaleDateString() });
-            save();
-        }
-
-        function terminateEmp(id) {
-            if (confirm("Permanently terminate this officer?")) {
-                const emp = employees.find(e => e.id == id);
-                history.unshift({ type: 'TERMINATION', name: emp.name, rank: emp.rank, empData: {...emp}, timestamp: new Date().toLocaleDateString() });
-                employees = employees.filter(e => e.id != id);
-                save();
-            }
-        }
-
-        function factoryReset() { if(confirm("DELETE ALL SYSTEM DATA?")) { localStorage.clear(); location.reload(); } }
-        function save() { localStorage.setItem('ASPD_Employees', JSON.stringify(employees)); localStorage.setItem('ASPD_History', JSON.stringify(history)); render(); }
-
-        function render() {
-            const st = document.getElementById('statusText');
-            st.innerHTML = isAdmin ? `<i class="fa-solid fa-unlock text-red-500 mr-1"></i> ADMIN: LOGOUT` : `<i class="fa-solid fa-lock mr-1"></i> LOCKED`;
-            document.getElementById('statusToggle').className = isAdmin ? 
-                "absolute top-0 right-0 border border-red-500 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-red-900/20 text-red-500" : 
-                "absolute top-0 right-0 border border-gray-700 text-[8px] px-3 py-1 rounded font-black uppercase tracking-widest cursor-pointer bg-black/40 text-gray-500";
-
-            document.getElementById('personnelSelect').disabled = !isAdmin;
-            document.getElementById('actualPaidInput').disabled = !isAdmin;
-
-            document.getElementById('totalFund').innerText = `$${history.reduce((sum, h) => sum + (h.type === 'PAYROLL_LOG' ? (h.amount || 0) : 0), 0).toLocaleString()}`;
-            
-            document.getElementById('rosterContainer').innerHTML = employees.map(e => {
-                const monthlyProj = RANKS[e.rank] * 4;
-                const currentAccrual = monthlyProj + (e.bonusPool || 0);
-                return `
-                <div class="glow-card purple-glow">
-                    <div class="flex justify-between items-start">
-                        <div><h2 class="text-2xl font-black">${e.name}</h2><p class="text-[9px] text-gray-500 uppercase mt-1">ID: ${e.id} | LAST PAY: ${e.lastPay}</p></div>
-                        <i onclick="adminAction(() => terminateEmp('${e.id}'))" class="fa-solid fa-trash text-red-900 text-xl cursor-pointer"></i>
+    async function fetchAllData() {
+        // Load Active
+        const res1 = await fetch(GOOGLE_URL + "?action=read");
+        const active = await res1.json();
+        const list = document.getElementById('suspectList');
+        list.innerHTML = '';
+        active.reverse().forEach(sus => {
+            list.insertAdjacentHTML('beforeend', `
+                <div class="suspect-card">
+                    <img src="${sus.img}" class="sus-img">
+                    <h3 class="font-black italic text-orange-400 text-sm uppercase">${sus.name}</h3>
+                    <div class="flex justify-between mt-5">
+                        <button onclick="moveToVault('${sus.name}')" class="btn-archive">Apprehended</button>
+                        <button onclick="scrubFile('${sus.name}')" class="btn-scrub"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
-                    <div class="mt-4 grid grid-cols-2 gap-2 border-t border-gray-800 pt-2">
-                        <div><p class="text-[8px] text-blue-400 font-bold uppercase italic mt-2">Standard Monthly</p><p class="text-sm font-bold">$${monthlyProj.toLocaleString()}.00</p></div>
-                        <div><p class="text-[8px] text-yellow-500 font-bold uppercase italic mt-2">Payout with Bonuses</p><p class="text-sm font-bold text-yellow-500">$${currentAccrual.toLocaleString()}.00</p></div>
-                    </div>
-                    <div class="rank-container mt-4"><div class="rank-display">Rank: ${e.rank} <i class="fa-solid fa-chevron-down text-[10px]"></i></div>
-                        <select ${isAdmin ? '' : 'disabled'} onchange="updateRank('${e.id}', this.value)">${Object.keys(RANKS).map(r => `<option value="${r}" ${r === e.rank ? 'selected' : ''}>${r}</option>`).join('')}</select>
-                    </div>
-                    <div class="status-btn"><i class="fa-solid fa-hourglass-half"></i> Active Personnel</div>
-                    <button onclick="adminAction(() => addBonus('${e.id}'))" class="reward-btn"><i class="fa-solid fa-hand-holding-dollar"></i> Add Bonus / Reward</button>
-                </div>`}).join('');
+                </div>`);
+        });
 
-            document.getElementById('personnelSelect').innerHTML = `<option value="">-- Select Employee --</option>` + 
-                employees.map(e => `<option value="${e.id}">${e.name} (${e.rank})</option>`).join('');
-
-            document.getElementById('auditLog').innerHTML = history.map((h, i) => {
-                let color = "text-green-500", icon = "fa-receipt", label = h.type;
-                if(h.type === 'TERMINATION') { color = "text-red-600"; icon = "fa-user-minus"; }
-                if(h.type === 'RANK_UPDATE') { color = "text-purple-500"; icon = "fa-angles-up"; label = `PROMOTION: ${h.rank}`; }
-                if(h.type === 'BONUS_PAY') { color = "text-blue-400"; icon = "fa-star"; label = `REWARD: $${(h.paid || 0).toLocaleString()}`; }
-                if(h.type === 'PAYROLL_LOG') { color = h.amount > 0 ? "text-yellow-500" : "text-green-500"; icon = "fa-sack-dollar"; label = h.amount > 0 ? "FUND REROLL" : "FULL PAY"; }
-                return `
-                <div class="audit-entry">
-                    <div class="flex gap-3"><i class="fa-solid ${icon} ${color} mt-1"></i>
-                        <div><p class="text-[10px] text-gray-500 font-bold">${h.timestamp}</p><p class="text-lg font-black leading-tight">${h.name}</p><p class="text-[9px] text-gray-500 font-bold uppercase">${label}</p></div>
+        // Load Archive with Mini Visuals
+        const res2 = await fetch(GOOGLE_URL + "?action=readArchive");
+        const archived = await res2.json();
+        const archList = document.getElementById('archiveList');
+        archList.innerHTML = '';
+        archived.reverse().forEach(sus => {
+            archList.insertAdjacentHTML('beforeend', `
+                <div class="suspect-card archive-card flex items-center gap-3 p-3">
+                    <img src="${sus.img}" class="mini-img">
+                    <div class="flex-1 overflow-hidden">
+                        <h3 class="font-black italic text-gray-400 text-[10px] uppercase truncate">${sus.name}</h3>
+                        <p class="text-[7px] text-green-700 font-bold uppercase">Status: In-Custody</p>
                     </div>
-                    <div class="text-right text-[9px] font-bold ${color} uppercase"><p>Impact</p><p class="text-white text-xs">$${(h.paid || h.amount || 0).toLocaleString()}</p></div>
-                </div>`}).join('');
-        }
-        window.onload = render;
-    </script>
+                    <button onclick="releaseCriminal('${sus.name}')" class="btn-release">RELEASE</button>
+                </div>`);
+        });
+    }
+</script>
 </body>
 </html>
